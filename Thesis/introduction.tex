@@ -1,0 +1,213 @@
+\section{Introduction}
+
+\subsection{Gene-expression analysis and dimensionality reduction}
+
+\subsection{Modeling data to Gaussian distributions}
+\subsubsection{The Gaussian distribution}
+
+\glsxtrnewsymbol[description={Number of samples}]{n}{\ensuremath{n}}
+\glsxtrnewsymbol[description={Single sample from a Gaussian distribution}]{x}{\ensuremath{x}}
+\glsxtrnewsymbol[description={Vector containing $n$ entries}]{xn}{\ensuremath{\textbf{x}^n}}
+\glsxtrnewsymbol[description={Population mean}]{mu}{\ensuremath{\mu}}
+\glsxtrnewsymbol[description={Variance}]{var}{\ensuremath{\sigma^2}}
+\glsxtrnewsymbol[description={Probability function of a Gaussian distribution with mean $\mu$ and variance $\sigma^2$}]{gauss}{\ensuremath{\mathcal{N}(x|\mu,\sigma^2)}}
+\glsxtrnewsymbol[description={Tuple of parameters, e.g. $\theta = (\mu, \sigma^2)$}]{theta}{\ensuremath{\theta}}
+
+The normal or \textit{Gaussian} distribution returns the probability of drawing a variable with a random value given the mean $\mu$ and variance $\sigma^2$ of the samplespace. It is defined by equation \ref{eq:gauss}.
+
+\begin{equation}\label{eq:gauss}
+    \mathcal{N}(x|\mu, \sigma^2)=\frac{1}{(2 \pi \sigma ^2)^{\frac{1}{2}}} e^{- \frac{1}{2\sigma ^2}(x - \mu)^2}
+\end{equation}
+
+Drawing \gls{n} independent samples from the Gaussian distribution, holds a probability of the product of the individual samples (see equation \ref{eq:gauss_prod}, where $\textbf{x}^n$ is a vector of $n$ samples).
+
+
+\begin{equation}\label{eq:gauss_prod}
+    p(\textbf{x}^n | \mu, \sigma^2) = \prod_{i=1}^{n}{\mathcal{N}(x_i|\mu, \sigma^2)}
+\end{equation}
+
+The probabilities are often given by their logarithm. On the one hand, this makes mathematical manipulations with Gaussian distributions a lot easier. On the other hand, the log function converts very small numbers to larger figures, which helps avoiding numerical underflow on electronic devices. Converting the entire Gaussian distribution to a log-probability results in equation \ref{eq:logprob} (also see appendix \ref{AP:log_prob}).
+
+
+\begin{equation}\label{eq:logprob}
+    \ln p(\textbf{x}^n | \mu, \sigma^2) = -\frac{n}{2} \ln 2 \pi -\frac{n}{2} \ln \sigma ^2 - \sum_{i=1}^{n} \frac{1}{2\sigma ^2}(x_i - \mu)^2
+\end{equation}
+
+One useful property of the log-function, when converting probabilities, is that the log-function is strictly increasing. This means that if we find a stationary point on $p(x|\mu, \sigma^2)$, we will find it for the same value of $x$ on $\ln p(x|\mu, \sigma^2)$.
+
+Let's say we have a vector of samples $\textbf{x}^n$ and we want to figure out which set of parameters $\theta$ (i.e. $\theta = (\mu, \sigma^2)$) fits best to this data. Bayes' theorem states that $P(A|B) = \frac{P(B|A) P(A)}{P(B)}$. This means that the \textit{likelihood} of $\theta$ having generated our $x^n$ ($p(\theta|\textbf{x}^n)$) is given as shown in equation \ref{eq:bayes_likeli}
+
+\begin{equation}\label{eq:bayes_likeli}
+p(\theta|\textbf{x}^n) = \frac{p(\textbf{x}^n|\theta)p(\theta)}{p(\textbf{x}^n)}
+\end{equation}.
+
+We can see that $p(\theta|\textbf{x}^n) \propto p(\textbf{x}^n|\theta)$. This term on the right side ($p(\textbf{x}^n|\theta)$) is known as the \textit{likelihood}, whereas the term on the left ($p(\theta|\textbf{x}^n)$) is the \textit{posterior}. Note that although the likelihood is proportional to the posterior, it does not take the influence of $p(\theta)$ into account (as shown in equation \ref{eq:bayes_likeli}), as is done in maximum a posterior (MAP) estimation. The likelihood is also proportional to $p(\textbf{x}^n)$, but this quantity is not dependent on $\theta$, so it can be considered as a constant when looking at the maximum values of $p(\theta|\textbf{x}^n)$. 
+
+The log likelihood of $\theta$ to the data-set of $\textbf{x}^n$ is thus proportional to $p(\theta|\textbf{x}^n) \propto -\frac{n}{2} \ln 2 \pi -\frac{n}{2} \ln \sigma ^2 - \sum_{i=1}^{n} \frac{1}{2\sigma ^2}(x_i - \mu)^2$ (equation \ref{eq:logprob}). To estimate the maximum, we take the derivative with respect to each parameter and set is to $0$. For $\mu$, this results in
+
+\begin{equation}\label{eq:derivative_mu}
+     \mu_{ML} = \frac{1}{n} \sum_{i=1}^{n} x_i\\
+\end{equation}
+
+(see appendix \ref{AP:mu_ML} for details).
+Where $\mu_{ML}$ is the $\mu$ with the maximum likelihood to fit the data. Similarly, for $\sigma^2$ we can find the maximum as
+
+\begin{equation}\label{eq:derivative_sigma}
+    \sigma^2_{ML} = \frac{1}{n} \sum_{i=1}^{n} (x_i - \mu_{ML})^2\\
+\end{equation}
+(see appendix \ref{AP:s2_ML} for details).
+Note that we need to find $\mu_{ML}$ first, before we can estimate $\sigma^2_{ML}$.
+
+\subsubsection{The Gaussian distribution for multivariate random variables}
+
+\glsxtrnewsymbol[description={Number of dimensions of one variable}]{m}{\ensuremath{m}}
+\glsxtrnewsymbol[description={Co-variance matrix}]{covmat}{\ensuremath{\bm{\Sigma}}}
+
+The discussed equations hold for multivariate random variables $\textbf{x}^m$ as well, but in this case, $\bm{\mu}^m$ is an $m$-dimensional vector where $\mu_i$ describes the mean of $x_i$. Also, for the variance, multiple values for each $x_i$ are needed, as well as values for the co-variance between $x_i$ and $x_j$ where $i\neq j$. All these (co-)variance are given by matrix $\bm{\Sigma}$, where $\bm{\Sigma}_{i,j}$ describes the co-variance between $x_i$ and $x_j$. Note that $\bm{\Sigma}$ must be symmetric, as a property of co-variance, and that $\bm{\Sigma}_{i,i}=cov(x_i,x_i) = var(x_i)$. For a set of independent variables, $\bm{\Sigma}$ is therefore a diagonal matrix. In a multivariate setting, the Gaussian distribution takes the following form:
+
+\begin{equation}\label{eq:gaus_mn}
+    \mathcal{N}(\textbf{x}^m|\bm{\mu}, \bm{\Sigma})=\frac{1}{(2 \pi)^{\frac{m}{2}}}\frac{1}{|\bm{\Sigma}|^{\frac{1}{2}}} e^{- \frac{1}{2}(\textbf{x}^m - \bm{\mu})^T \bm{\Sigma}^{-1}(\textbf{x}^m - \bm{\mu})}
+\end{equation}
+
+
+The maximum likelihood for the mean and co-variance matrix are given in equations \ref{eq:derivative_mu_mn} and \ref{eq:derivative_sigma_mn}.
+
+\begin{equation}\label{eq:derivative_mu_mn}
+    \bm{\mu}^m = \frac{1}{m} \sum^m_{i=1} \bm{x}^m
+\end{equation}
+
+\begin{equation}\label{eq:derivative_sigma_mn}
+    \bm{\mu}^m = \frac{1}{m} \sum^m_{i=1} (\bm{x}^m - \bm{\mu}_{ML}) (\bm{x}^m - \bm{\mu}_{ML})^T
+\end{equation}
+
+% TODO: calculations in appendix
+
+\subsubsection{Latent variables}
+
+\glsxtrnewsymbol[description={specific co-variance matrix of $\textbf{x}$ in context of latent variables}]{covmatX}{\ensuremath{\bm{C}}}
+\glsxtrnewsymbol[description={Number of latent dimensions}]{latentdim}{\ensuremath{d}}
+\glsxtrnewsymbol[description={Latent variable of $d$ dimensions}]{latent}{\ensuremath{\bm{z}^d}}
+\glsxtrnewsymbol[description={$m \times d$ matrix transforming latent variables to observed variables}]{W}{\ensuremath{\bm{W}}}
+\glsxtrnewsymbol[description={An $n \times m$ matrix, containing $n$ samples of $m$ dimensions}]{X}{\ensuremath{\bm{X}}}
+
+Now let's suppose we find an $m$-dimensional sample, i.e. for every sample we take, we obtain $m$ values of $x_1,...x_m$, which might show non-zero co-variances. Now we could treat all these variables as separate identities, but it is well possible that the output of some of those random variables are directly influenced by one hidden or \textit{latent} variable. For instance, we might measure levels of expression of $m$ genes. It is then possible that one latent variable (e.g. a genetic disorder) affects the expression levels of multiple genes. Since it is hard to visualize more than $3$ dimensions (the expression of more than $3$ genes in this example), it would be ideal to visualise the underlying latent variables instead, as they exhibit less dimensions.
+
+Suppose we have an $m$-dimensional vector $\textbf{x}^m$ of measured data. All variables $x_i$ could be the result of the $d$-dimensional vector $\textbf{z}^d$ of latent variables which are drawn from a zero-centered Gaussian distribution $\mathcal{N}(\textbf{z}^d|\textbf{0},\textbf{I})$, with $\textbf{I}$ being the $d \times d$ identity matrix and $\textbf{0}$ as a zero-vector of length $d$. In our model, $\textbf{x}^m$ is given by $\textbf{x}^m = \textbf{W}\textbf{z}^d + \bm{\mu}^m + \epsilon$. In this case, $\bm{\mu}^m$ is an $m$-dimensional vectors describing the mean. $\epsilon$ describes an $m$-dimensional arbitrary error from a Gaussian distribution $\mathcal{N}(\epsilon|0,\sigma^2 \bm{I_m})$. $W$ is a $m\times d$ matrix mapping $\bm{z}$ to $\bm{x}$ and its entries are known as the \textit{factor loadings}.
+
+This means that the probabilities of $\textbf{x}^m$ given $\textbf{z}^d$ are defined as $\mathcal{N}(\textbf{x}^m|\textbf{W}\textbf{z}^d+\bm{\mu}, \sigma^2 \textbf{I})$.
+ The marginal distribution of $\textbf{x}^m$ is given by $p(\textbf{x}^m) = \int p(\textbf{x}^m|\textbf{z}^d) p(\textbf{z}^d) d\textbf{z}$. Since $\textbf{z}$ and $\bm{\epsilon}$ have a mean of $0$, $E[\textbf{x}] = E[\textbf{Wz}+\bm{\mu}+\bm{\epsilon}] = E[\bm{\mu}]$. We also know that $\text{cov}[\textbf{x}] = E[(\textbf{Wz}+\bm{\epsilon})(\textbf{Wz}+\bm{\epsilon})^\text{T}] = E[\textbf{Wz}\textbf{z}^\text{T}\textbf{W}^\text{T}]+E[\bm{\epsilon\epsilon}^\text{T}] = \textbf{WW}^\text{T}+\sigma^\text{T}\textbf{I}_m$. Therefore, $\mathcal{N}(\textbf{x}^m| \bm{\mu}^m, \textbf{C})$, where $\textbf{C}$ is the co-variance matrix given by $\textbf{C} = \textbf{WW}^\text{T} + \sigma^2 \bm{I_m}$.
+ 
+ So far, we have discussed the observed vector $\textbf{x}^m$ which described a single sample of multiple, related variables. Usually, we will observe multiple, let's say $n$, samples. $\textbf{X}$ is now a $n\times m$ matrix, where every row $i$ is a vector $\textbf{x}^m_i$.
+ Similarly, we have now a $n\times d$ matrix $\textbf{Z}$ containing all the latent data.
+ The probability of observing $\textbf{X}$ in our model can be stated as $\prod^n_{i=1} p(\textbf{x}_i|\bm{\mu}, \bm{W}, \sigma^2)$. The log likelihood function can therefore be determined as
+ 
+ \begin{equation}
+ \begin{split}
+     \ln p(\textbf{X}|\bm{\mu}, \bm{W}, \sigma^2) = 
+     \sum^n_{i=1} \ln p(\textbf{x}^m_i|\bm{\mu}, \bm{W}, \sigma^2)\\
+     = -\frac{mn}{2}\ln 2\pi - \frac{n}{2} \ln |\textbf{C}| - \frac{1}{2}\sum^n_{i=1} (\textbf{x}^m_i - \bm{\mu})^T \bm{C}^{-1}(\textbf{x}^m_i - \bm{\mu})
+\end{split}
+ \end{equation}
+
+
+ 
+ \subsubsection{Probabilistic PCA and the EM algorithm}
+ Now suppose we want to find a matrix $\textbf{Z}$ describing the latent data based on the matrix of observed data $\textbf{X}$. A closed form solution has been found\cite{ppca}. The approach used in this research, however, is based on an the iterative \textit{Expectation-Maximization} (EM) algorithm. An EM-algorithm consist out of two steps:
+ 
+ \begin{itemize}
+     \item In the Expectation-step, the expected log likelihood function of the complete (observed and latent) data is estimated from their joint probabilities. In our case $p(\textbf{X},\textbf{Z}|\theta)$ is estimated, based on the current estimate of the parameters $\theta$ (i.e. the parameters $\bm{\mu}$, $\textbf{W}$ and $\sigma^2$).
+     \item In the maximization step, the parameters $\theta$ are maximized based on the estimated log likelihood.
+ \end{itemize}
+ 
+ 
+For the E-step, we are interested in the log likelihood of the complete data-set(including latent variables). The joint probability of the observed and latent data is given by $p(\textbf{X},\textbf{Z}) = \prod_{i=1}^{n} p(\textbf{x}^m_i | \textbf{z}^d_i)p(\textbf{z}_i^d)$. If we were to translate this into a log likelihood as $\ln p(\textbf{X},\textbf{Z}) = \sum_{i=1}^{n} \ln p(\textbf{x}^m_i | \textbf{z}^d_i)+ \ln p(\textbf{z}_i^d)$, we would end up with equation \ref{eq:latentlog}.
+
+\begin{equation}\label{eq:latentlog}
+\begin{split}
+    E[\ln p(\textbf{X},\textbf{Z}|\bm{\mu}, \textbf{W}, \sigma^2)] &=\\ \sum_{i=1}^{n} \frac{m}{2} \ln{2\pi \sigma^2} +& \frac{1}{2} \text{Tr}(E[{\textbf{z}^d_i}{\textbf{z}^d_i}^T]) 
+    + \frac{1}{2\sigma^2}||\textbf{x}^m_i -\bm{\mu}||^2\\  - \frac{1}{\sigma^2}E[\textbf{z}^d_i]^T\textbf{W}^T (\textbf{x}^m_i-\bm{\mu})
+    +& \frac{1}{2\sigma^2}\text{Tr}(E[\textbf{z}^d_i{\textbf{z}^d_i}^T]\textbf{W}^T\textbf{W})
+    + \frac{d}{2}\ln{2\pi}
+\end{split}
+\end{equation}
+ 
+ We would also like to know what the expected value is for every latent variable $\textbf{z}^d_i$. For this, it is best to look at the differences between each sample $\textbf{x}^m_i$ and the mean of all samples $\overline{\textbf{x}}^m$. We then use the transformation matrix $\textbf{W}$ and the matrix $\textbf{M} = \textbf{W}^\text{T}\textbf{W} + \sigma^2 \bm{I_d}$ to get to the expected values of $\textbf{z}^d_i$.
+ 
+ \begin{equation}
+     \begin{split}
+         E[\textbf{z}^d_i] &= \textbf{M}^{-1}\textbf{W}^T(\textbf{x}^m_i-\overline{\textbf{x}}^m)
+     \end{split}
+ \end{equation}
+ 
+ \begin{equation}
+     \begin{split}
+         E[\textbf{z}^d_i{\textbf{z}^d_i}^T] &= \sigma^2 \textbf{M}^{-1} + E[\textbf{z}^d_i]E[\textbf{z}^d_i]^T
+     \end{split}
+ \end{equation}
+ 
+ % TODO: read 2.3 - 2.3.3 and then explain this
+ 
+ 
+ For the M-step, we differentiate this equation with respect to the parameters $\theta$ and find the maximum-likelihood values for these parameters. We already know that $\bm{\mu}_{ML}$ is given by the sample mean of $\textbf{X}$ (equation \ref{eq:derivative_mu_mn}). $\textbf{W}$ can be obtained by equation \ref{eq:em_W} and then $\sigma^2$ can be obtained by equation \ref{eq:em_sig} using the newly obtained values for $\textbf{W}$.
+ 
+ \begin{equation}\label{eq:em_W}
+     \textbf{W} = \Bigg[\sum^n_{i=1} (\textbf{x}^m_i-\overline{\textbf{x}}) E[\textbf{z}^d_i]^T\Bigg] \Bigg[\sum^n_{i=1} E[\textbf{z}^d_i{\textbf{z}^d_i}^T]\Bigg]^{-1}
+ \end{equation}
+ 
+ \begin{equation}\label{eq:em_sig}
+     \sigma^2 = \frac{1}{mn} \sum^n_{i=1} ||\textbf{x}^m_i-\overline{\textbf{x}}||^2 - 2E[\textbf{z}_i^d]^T\textbf{W}^T(\textbf{x}^m_i-\overline{\textbf{x}}) + \text{Tr}(E[\textbf{z}^d_i{\textbf{z}^d_i}^T]\textbf{W}^T\textbf{W})
+ \end{equation}
+ 
+% The initial values for all parameters are set random, or if possible, are based on an educated guess.
+ 
+\subsection{Additions to the classical model}
+\subsubsection{Mixture models}
+
+\glsxtrnewsymbol[description={Number of Gaussian distributions that generate data-points}]{clusters}{\ensuremath{K}}
+\glsxtrnewsymbol[description={Mixture coefficient of distribution $k$}]{mix}{\ensuremath{\pi_k}}
+\glsxtrnewsymbol[description={Binary operator indicating whether distribution $k$ generated an element}]{zk}{\ensuremath{z_k}}
+\glsxtrnewsymbol[description={Probability that distribution $k$ generated element $i$}]{gki}{\ensuremath{\gamma(z_{k,i})}}
+
+So far, we have assumed that a Gaussian distribution is determined by single quantities of mean and variance. In reality, our data-set could easily be generated from multiple and different distributions. Quantitative data from one group of people might fit to a Gaussian distribution, while the data of another group might fit to a Gaussian distribution that is centered with its mean around another number and with a different spread around its mean. Observed together, this data might display a distribution with multiple maxima at different points. Moreover, such a distribution would not only consists out of two (or more) equal distributions, but we could also expect one distribution to supply more data-points than others. For this reason, mixture models have to be taken in consideration.
+
+Let's say we have $K$ different distributions that generate our data. For the sake of simplicity we assume all these distributions to be the same in that they are all Gaussian distributions, although they may show different means and variances. Now, since they may all be more or less relevant to each other, we would also like to quantify their measure of relative data generation. First, we call a variable $z_k$ which is $1$ if an element is drawn from distribution $k$ and $0$ otherwise. To describe to probability that distribution $k$ generated an element, we denote a variable of mixture coefficients $\pi$, where $\pi_k = p(z_k=1)$ where $1 \leq k \leq K$ and $\sum_{k=1}^K \pi_k = 1$. The total distribution of $x$ is then given by equation \ref{eq:mm}, where $\bm{\mu}_k$ and $\bm{\Sigma}_k$ give the means and co-variance matrix of each distribution $k$.
+
+\begin{equation}\label{eq:mm}
+    p(x) = \sum_{k=1}^K \pi_k \mathcal{N}(x|\bm{\mu}_k, \bm{\Sigma}_k)
+\end{equation}
+
+To tackle a problem like this, we use another EM-algorithm. In the E-step of our algorithm, we try to find the posterior probabilities of the latent data, i.e., the probabilities $p(z_k|x)$ that data-point $x_i$ comes from distribution $k$. In the M-step, we utilise these probabilities to calculate the weighted mean $\mu_k$, variance $\sigma^2_k$ and mixing coefficient $\pi_k$ of each distribution $k$. After we have chosen some arbitrary initial values for $\mu_k$, $\sigma^2_k$ and $\pi_k$, we start with the E-step.
+We know that $p(x|z_k=1) = \mathcal{N}(x|\bm{\mu}_k, \bm{\Sigma}_k)$. Given this distribution, we can compute the posterior $p(z_k=1|x)$ according to Bayes' theorem as follows:
+
+\begin{equation}
+    p(z_k=1|\textbf{x}_i^m) = \frac{p(z_k=1) p(\textbf{x}_i^m|z_k=1)}{\sum^K_{j=1}p(z_j=1)p(\textbf{x}_i^m|z_j=1)}\\
+    = \frac{\pi_k\mathcal{N}(\textbf{x}_i^m|\bm{\mu}_k, \bm{\Sigma}_k)}{\sum_{j=1}^K\pi_j\mathcal{N}(\textbf{x}_i^m|\bm{\mu}_j, \bm{\Sigma}_j)} 
+\end{equation}
+
+In the literature, the posterior probability is often denoted as $\gamma(z_{k,i}) = p(z_k=1|\bm{x}_i^n)$. With this, we have a formula for the posterior probabilities $\gamma(z_{k,i})$ and we conclude our E-step.
+
+For our M-step, we shall start with the mean of each distribution $k$. This is simply given as the weighted average of all points belonging to distribution $k$ (equation \ref{eq:mm_mu}.
+
+\begin{equation}\label{eq:mm_mu}
+    \bm{\mu}_k = \frac{1}{\sum^n_{i=1} \gamma(z_{k,i})} \sum^n_{i=1} \gamma(z_{k,i}) \textbf{x}^m_i
+\end{equation}
+
+Similarly, the variance is computed as the weighted variance.
+
+\begin{equation}\label{eq:mm_var}
+    \bm{\Sigma}_k = \frac{1}{\sum^n_{i=1} \gamma(z_{k,i})} \sum^n_{i=1} \gamma(z_{k,i}) (\textbf{x}^m_i-\bm{\mu}_k)(\textbf{x}^m_i-\bm{\mu}_k)^T
+\end{equation}
+
+Finally, $\pi_k$ is obtained as the average probability that all points belong to distribution $k$.
+
+\begin{equation}\label{eq:mm_mix}
+    \pi_k = \frac{\sum^n_{i=1}{} \gamma(z_{k,i})}{n}
+\end{equation}
+
+Having obtained new values for all relevant parameters, we return to the E-step and obtain new posterior probabilities. The process is repeated until a converged state is reached.
+
+%TODO: log likelihood for mean, var and pi
+
+\subsection{TensorFlow Probability}
+ 
+ 
