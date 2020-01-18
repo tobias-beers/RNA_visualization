@@ -9,6 +9,7 @@ https://www.overleaf.com/read/bsdqzxcvhcgw
 The folder 'TF-tutorials' contains some of the tutorials on TensorFlow 
 Probability in jupyter notebook format (the tutorials itself are published on https://www.tensorflow.org/probability/overview). Literature is contained within 
 the 'literature'-folder.
-The 'Code'-folder is rather empty as of yet, but will contain the 
-relevant code for my thesis.
+Both TensorFlow Probability and PyStan have been used as environments 
+for this project. The 'code'-folder contains the relevant pieces of code 
+for this project.
 
