@@ -13,4 +13,5 @@
 - lambda schatten ipv h
 - diagonale covariantie matrix
 
-- EM algorithme in python
+- EM algorithme in python voor ppca en ook closed form solution
+- leer sampelen met stan
