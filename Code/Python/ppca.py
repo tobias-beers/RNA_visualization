@@ -20,15 +20,21 @@ class PPCA:
         self.fitted = False
         self.x_sim_closed = None
     
-    def fit(self, data, M=2, form='closed', em_iterations = 25, em_calc_loglikelihood = False):
+    def fit(self, data, M=2, form='closed', em_iterations = 25, em_calc_loglikelihood = False, mu = None):
+        '''
+        x should be a N x D matrix
+        '''
         
         self.data = data.T
         
         self.M = M
         self.D, self.N = np.shape(self.data)
         
-        self.mu_ML = self.mu_ML = np.mean(self.data,axis=1)[np.newaxis].T
-        
+        if np.all(mu) == None:
+            self.mu_ML = self.mu_ML = np.mean(self.data,axis=1)[np.newaxis].T
+        else:
+            self.mu_ML = mu
+            
         S = np.cov(self.data)
         
         if form == 'closed':

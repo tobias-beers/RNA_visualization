@@ -1,5 +1,12 @@
 import numpy as np
 
+'''
+When comparing two matrices to check whether they are rotations of each other, just multiply both with their transposes.
+If A = BR, then AA^T = BRR^T B^T and since RR^T = I for any rotation matrix R, AA^T will yield the same result for any rotation of B.
+'''
+
+
+
 def rotation_check(A, B, threshold_R=0.01, threshold_angle=0.1, method='find_rotation_mat',verbose=False, order_angles_by_magnitude=False):
     '''
     Use 'method='find_rotation_mat'' to find the matrix R where AR=B and check whether det(R)=1 and R^T=R^-1
