@@ -14,7 +14,11 @@ dsitribution.
 - Generalized GMM to multivariate, discovered the importance of inital 
 values  and started to initialize with k-means 
 clustering algorithm
+- Moved Stan scripts to separate folder outside of ntoebooks and created 
+a 
+loader to cache and load scripts to save compiling time.
 - Completed the Mixture of PPCA's optimization in pystan, works 
 perfectly.
 - Completed the *interactive* version of the Hierarchical latent 
 variable model as described by Bishop & Tipping in PyStan.
+- started this note with an overview of completed work by week.
