@@ -1,4 +1,4 @@
-### Huiswerk
+## Huiswerk
 These are just some quick notes on what to do for the coming time for 
 myself.
 
@@ -20,6 +20,7 @@ myself.
 - EM algorithme in python voor ppca en ook closed form solution
 - leer sampelen met stan
 
+## 20-2
 - optimizing methode, sigma z met lower bound
 - ZIFA model specificatie
 - mean vs best fit
