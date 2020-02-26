@@ -8,7 +8,8 @@ applied the mean sample to all parrameters, except for parameters that
 indicate missing data such as latent data.
 - Made extra ZIFA/ZIPPCA model where the model is specified instead of 
 the log-likelihood. Found that the slight offset in results is due to 
-the wrong assumption that $x$ and $y_{y\not=0}$ come from the same 
+the wrong assumption that $x$ and $y<sub>y\neq 0</sub>$ come from the 
+same 
 dsitribution.
 - Generalized GMM to multivariate, discovered the importance of inital 
 values  and started to initialize with k-means 
