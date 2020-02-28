@@ -25,3 +25,10 @@ myself.
 - ZIFA model specificatie
 - mean vs best fit
 - (optional) start on MoPPCAs
+
+### 27-2
+- ARD ppca specification
+- ppca to initialize W for moppcas
+- soft clustering for hierarchical mixtures
+- selection in ppca dimension but clustering in original space
+- modellen van perry
