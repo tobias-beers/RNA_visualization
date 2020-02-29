@@ -1,3 +1,8 @@
+## Done for thursday (5-3)
+
+- soft clustering in hierarchical model
+- clustering in full space instead of in latent space
+
 ## Done for thursday (27-2)
 
 - Latent variable models with contraints on std. dev. in attempt to make 

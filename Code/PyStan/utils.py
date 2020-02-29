@@ -6,11 +6,14 @@ def loadStan(file, recompile=False, automatic_pickle = True):
         try:
             model = pystan.StanModel(file = 'StanModels/'+file+'.stan')
             print('Model compiled succesfully.')
-            with open('pickled_models/'+file+'.pkl', 'wb') as f:
-                pickle.dump(model, f)
-            print('Model saved succesfully to cache.')
-        except:
+            if automatic_pickle:
+                with open('pickled_models/'+file+'.pkl', 'wb') as f:
+                    pickle.dump(model, f)
+                print('Model saved succesfully to cache.')
+        except FileNotFoundError:
             print(file+'.stan not found!')
+        except ValueError:
+            print('Could not compile! Error in code maybe!')
     else:
         try:
             model = pickle.load(open('pickled_models/'+file+'.pkl', 'rb'))
@@ -23,7 +26,9 @@ def loadStan(file, recompile=False, automatic_pickle = True):
                     with open('pickled_models/'+file+'.pkl', 'wb') as f:
                         pickle.dump(model, f)
                     print('Model saved succesfully to cache.')
-            except:
-                print(file+'.stan and '+file+' both not found!')
+            except FileNotFoundError:
+                print(file+'.stan not found!')
+            except ValueError:
+                print('Could not compile! Error in code maybe!')
 
     return model
