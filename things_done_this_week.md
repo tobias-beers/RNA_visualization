@@ -2,6 +2,9 @@
 
 - soft clustering in hierarchical model
 - clustering in full space instead of in latent space
+- Tried to implement ARD, noticed that some implementations implement 
+this on latent dimensions and others on observed dimensions, implemented 
+on both.
 
 ## Done for thursday (27-2)
 
