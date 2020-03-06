@@ -32,3 +32,13 @@ myself.
 - soft clustering for hierarchical mixtures
 - selection in ppca dimension but clustering in original space
 - modellen van perry
+
+### 5-3
+- Look into GAP statistic to estimate number of clusters
+- Obtain real scRNA-seq datasets
+- Fit model on real datasets
+- Try to evaluate model with and without ARD-prior
+- Think about (combinations of) clustering methods
+- Look into simulated dataset Philip
+- Look into evaluation scores for both clustering and visualization and 
+try to evaluate work

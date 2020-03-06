@@ -5,6 +5,7 @@
 - Tried to implement ARD, noticed that some implementations implement 
 this on latent dimensions and others on observed dimensions, implemented 
 on both.
+- read and understood papers on i-ppca and panoview.
 
 ## Done for thursday (27-2)
 
