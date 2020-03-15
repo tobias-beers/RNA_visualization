@@ -11,8 +11,8 @@ parameters{
     matrix[D,M] W;  // factor loadings
     real<lower=0> sigma;   //  standard  deviations
     vector[D] mu;   //  added means
-    vector<lower=0>[D] alpha;  // variance explained by observed variables
-    vector<lower=0>[M] beta;   // variance explained by latent variables
+    vector<lower=0>[M] alpha;  // variance explained by observed variables
+    //vector<lower=0>[M] beta;   // variance explained by latent variables
 }
 
 transformed parameters{
@@ -33,18 +33,18 @@ transformed parameters{
 
 model{
     //  priors
-    for (m in 1:M){
-        W[:,m] ~ normal(0.0,alpha);
-        }
+    //for (m in 1:M){
+        //W[:,m] ~ normal(0.0,beta);
+        //}
         
     for (d in 1:D){
-        W[d] ~ normal(0.0,beta);
+        W[d] ~ normal(0.0,alpha);
     //    mu[d]~normal(0.0, 5.0) ;
         }
         
     //sigma~lognormal(0.0, 1.0) ;
     alpha~inv_gamma(1.0,1.0);
-    beta~inv_gamma(1.0,1.0);
+    //beta~inv_gamma(1.0,1.0);
     
     
     //  likelihood

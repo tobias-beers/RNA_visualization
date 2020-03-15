@@ -1,3 +1,31 @@
+## Done for tuesday (17-3)
+
+- Implemented ARI and weighted accuracy on hierarchical model as 
+clustering evaluation score
+- Found information coding to be one of the most important heuristics of 
+visualization evaluation (Forsell & Johansson, 2010) and agree. 
+Considering sum of Euclidean distances between original and recreated 
+projection as evaluation measure for visualization purposes.
+- Corrected ARD prior with respect to latent dimensions, also made ARD 
+prior on observed dimension but was not effective.
+- Gathered and formatted darmaris and nestorowa dataset
+- Looked into GAP-statistic, encountered problems (found always too many 
+or too few clusters.
+	- Finding too many clusters was due to non-round shape of 
+clusters. Decided it was better to divide into max. 2 clusters anyway, 
+since more separation can always be performed on a lower level, where 
+the latent space has a better definition.
+	- also looked into silhouette score, was not applicable as it 
+doesn't fit models of only one cluster.
+	- Finding too few (usually just 1) clusters was due to very latent space, as MoPPCAs-model were very 
+cohesive, 
+separate GMM/k-means and PPCA produce better results.
+		- Tried not to specify mean and covariance matrix of 
+latent data of each cluster to avoid single-clustered latent data, did 
+not work.
+- tried fitting models to real datasets, takes very long (days), kernel 
+crashes when fitting ppca with ARD prior on N-1 latent dimensions
+
 ## Done for thursday (5-3)
 
 - soft clustering in hierarchical model
