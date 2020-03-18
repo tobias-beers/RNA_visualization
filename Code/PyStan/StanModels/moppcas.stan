@@ -48,7 +48,7 @@ transformed parameters{
 model {
 
     vector[K] log_theta = log(theta);  // cache log calculation
-    //real probclus[K]; 
+    real probclus[K]; 
     
     for (k in 1:K){
         if (theta[k]<1.0/(2*K)){
@@ -60,13 +60,19 @@ model {
     for (n in 1:N){
     
     vector[K] lps = log_theta;
-        
         for (k in 1:K){
-            lps[k] += multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]);
-            lps[k] += multi_normal_lpdf(z[k][:,n]|mean_z, cov_z);
-            
+            probclus[k] = exp(log_theta[k]+multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]));
         }
-        target += log_sum_exp(lps);
+        for (k in 1:K){
+            prob_in_clus = probclus[k]/sum(probclus)
+            target += prob_in_clus*log_theta[k];
+            target += prob_in_clus*multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]);
+            target += prob_in_clus*multi_normal_lpdf(z[k][:,n]|mean_z, cov_z);
+            //lps[k] += multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]);
+            //lps[k] += multi_normal_lpdf(z[k][:,n]|mean_z, cov_z);
+            //lps[k] = lps[k]*(probclus[k]/sum(probclus));
+        }
+        //target += sum(lps);
     }
 }
 
