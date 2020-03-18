@@ -60,13 +60,11 @@ model {
     for (n in 1:N){
     
     vector[K] lps = log_theta;
-        //for (k in 1:K){
-            //probclus[k] = exp(log_theta[k]+multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]));
-        //}
+        
         for (k in 1:K){
             lps[k] += multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]);
             lps[k] += multi_normal_lpdf(z[k][:,n]|mean_z, cov_z);
-            //lps[k] = lps[k]*(probclus[k]/sum(probclus));
+            
         }
         target += log_sum_exp(lps);
     }
