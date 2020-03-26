@@ -76,13 +76,21 @@ def est_k(points, k_max = 2, refs = 3, method='aic', verbose=False):
     bics = []
     mods = []
     for k in range(1,k_max+1):
-        for ref in range(refs):
+        if k ==1:    # for k=1, the result will always be the same, no need for multiple testing
             model = KMeans(k).fit(points)
             mods.append(model)
             clus.append(k)
             a, b =kmeans_AIC(points,model, verbose=verbose)
             aics.append(a)
             bics.append(b)
+        else:
+            for ref in range(refs):
+                model = KMeans(k).fit(points)
+                mods.append(model)
+                clus.append(k)
+                a, b =kmeans_AIC(points,model, verbose=verbose)
+                aics.append(a)
+                bics.append(b)
     if clus[np.argmin(aics)]!=clus[np.argmin(bics)]:
         print(clus[np.argmin(aics)], ' clusters according to AIC, ', clus[np.argmin(bics)], ' clusters according to BIC.')
     if method=='aic':
@@ -106,7 +114,7 @@ def kmeans_AIC(points, model, verbose=False):
     aic = -2*llh + 2*np.shape(points)[1]*model.n_clusters
     bic = -2*llh + np.log(np.shape(points)[0])*np.shape(points)[1]*model.n_clusters
     if verbose:
-        print('n_clusters: ',model.n_clusters, 'AIC: ',aic, 'BIC: ',bic)
+        print('n_clusters: ',model.n_clusters, ', AIC: ',aic, ', BIC: ',bic)
     return aic, bic
 
 class hierarchical_model:
