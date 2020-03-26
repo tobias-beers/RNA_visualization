@@ -1,6 +1,9 @@
 ## Done for thursday (26-3)
 - Made cluster determination by AIC and BIC
+	- Solved underflow problem in cluster determination
 - Solved MoPPCAs problem.
+- Gathered and integrated labels of nestorowa and darmaris dataset
+- completed fully automated hierarchical algorithm
 
 ## Done for tuesday (17-3)
 
