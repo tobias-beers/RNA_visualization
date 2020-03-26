@@ -49,6 +49,7 @@ model {
 
     vector[K] log_theta = log(theta);  // cache log calculation
     real probclus[K]; 
+    real prob_in_clus;
     
     for (k in 1:K){
         if (theta[k]<1.0/(2*K)){
@@ -61,29 +62,26 @@ model {
     
     vector[K] lps = log_theta;
         for (k in 1:K){
-            probclus[k] = exp(log_theta[k]+multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]));
+            probclus[k] = exp(log_theta[k]+multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k])+multi_normal_lpdf(z[k][:,n]|mean_z, cov_z));
         }
         for (k in 1:K){
-            prob_in_clus = probclus[k]/sum(probclus)
-            target += prob_in_clus*log_theta[k];
+            prob_in_clus = probclus[k]/sum(probclus);
+            //target += prob_in_clus*log_theta[k];
             target += prob_in_clus*multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]);
             target += prob_in_clus*multi_normal_lpdf(z[k][:,n]|mean_z, cov_z);
-            //lps[k] += multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]);
-            //lps[k] += multi_normal_lpdf(z[k][:,n]|mean_z, cov_z);
-            //lps[k] = lps[k]*(probclus[k]/sum(probclus));
         }
-        //target += sum(lps);
     }
 }
 
 generated quantities{
     matrix[N,K] clusters;
-    
+    vector[K] log_theta = log(theta);  // cache log calculation
     
     for (n in 1:N){
         for (k in 1:K){
-            clusters[n,k] = log(theta[k]) + multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]) + multi_normal_lpdf(z[k][:,n]|mean_z, cov_z);
+            clusters[n,k] = exp(log_theta[k]+multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]));
         }
+        clusters[n,:] = clusters[n,:]/sum(clusters[n,:]);
     }
     
 }

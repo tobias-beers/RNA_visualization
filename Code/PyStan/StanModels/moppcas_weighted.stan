@@ -4,7 +4,7 @@ data {
   int<lower=2> D;          // number of observed variables
   int<lower=1> M;          // number of latent dimensions
   matrix[N,D] y;           // observations
-  matrix<lower=0, upper=1>[N,K] weights;       // weights
+  vector<lower=0, upper=1>[N] weights;       // weights
 }
 
 parameters {
@@ -49,35 +49,35 @@ transformed parameters{
 model {
 
     vector[K] log_theta = log(theta);  // cache log calculation
-    
-    
-    for (k in 1:K){
-        if (theta[k]<1.0/(2*K)){
-            target+= negative_infinity();
-        }
-        for (n in 1:N){
-            z[k][:,n] ~ multi_normal(mean_z, cov_z);
-        }
-    }    
+    real probclus[K]; 
+    real prob_in_clus;
 
     
     for (n in 1:N){
+    
     vector[K] lps = log_theta;
         for (k in 1:K){
-            lps[k] += weights[n,k]*multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]);
+            probclus[k] = exp(log_theta[k]+multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k])+multi_normal_lpdf(z[k][:,n]|mean_z, cov_z));
         }
-        target += log_sum_exp(lps);
+        for (k in 1:K){
+            prob_in_clus = probclus[k]/sum(probclus);
+            //target += weights[n]*prob_in_clus*log_theta[k];
+            target += weights[n]*prob_in_clus*multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]);
+            target += weights[n]*prob_in_clus*multi_normal_lpdf(z[k][:,n]|mean_z, cov_z);
+        }
     }
 }
 
 generated quantities{
     matrix[N,K] clusters;
+    vector[K] log_theta = log(theta);  // cache log calculation
     
     
     for (n in 1:N){
         for (k in 1:K){
-            clusters[n,k] = (log(theta[k]) + multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]));
+            clusters[n,k] = exp(log_theta[k]+multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k])+multi_normal_lpdf(z[k][:,n]|mean_z, cov_z));
         }
+     clusters[n,:] = clusters[n,:]/sum(clusters[n,:]);
     }
     
 }

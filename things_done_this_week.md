@@ -1,3 +1,7 @@
+## Done for thursday (26-3)
+- Made cluster determination by AIC and BIC
+- Solved MoPPCAs problem.
+
 ## Done for tuesday (17-3)
 
 - Implemented ARI and weighted accuracy on hierarchical model as 

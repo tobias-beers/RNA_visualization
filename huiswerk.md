@@ -2,7 +2,7 @@
 These are just some quick notes on what to do for the coming time for 
 myself.
 
-### next time
+### 17-3
 
 - AIC/BIC to estimate number of clusters
 - apply weight to latent data moppcas
