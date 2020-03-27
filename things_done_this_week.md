@@ -1,3 +1,8 @@
+## Done for thursday (2-04)
+- Solved negative numbers in Nestorowa data
+- Looked at normalization Nestorowa data, only found that nomalizationw as performed with Rpackage Combat.
+- made Pystan script for gmm with diagonal cov. matrix
+
 ## Done for thursday (26-3)
 - Made cluster determination by AIC and BIC
 	- Solved underflow problem in cluster determination

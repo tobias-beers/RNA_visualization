@@ -2,8 +2,14 @@
 These are just some quick notes on what to do for the coming time for 
 myself.
 
-### 17-3
+### 26-3
+- transformeren data
+	- log2(data+1)
+	- normalisatie
+- uitzoeken wat nestorowa met data heeft gedaan
+- gmm met diagonale cov matrix ipv kmeans
 
+### 17-3
 - AIC/BIC to estimate number of clusters
 - apply weight to latent data moppcas
 - check weighted ppca model, maybe use log of weights
