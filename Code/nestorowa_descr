@@ -1,0 +1,9 @@
+- HSPCs collected from bone marrow of 10 female 12-week-old mice over 2 
+conseq days.
+- EasySep Mouse Hematopoietic Progenitor Cell Enrichment kit (STEMCELL 
+Technologies)
+- sequenced by Illumina HiSequation 2500 system, resequenced by Illumina 
+Hisequation 4000 system
+- flowCore (R) to extract and compensate data
+- ComBat (R) to normalize data
+
