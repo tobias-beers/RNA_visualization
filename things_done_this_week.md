@@ -1,7 +1,13 @@
 ## Done for thursday (2-04)
 - Solved negative numbers in Nestorowa data
-- Looked at normalization Nestorowa data, only found that nomalizationw as performed with Rpackage Combat.
+- Looked at transformation and normalization Nestorowa data, only found 
+that nomalizationw as performed with Rpackage Combat.
 - made Pystan script for gmm with diagonal cov. matrix
+- integrated diag gmm into cluster estimation and into hierarchical algorithm
+- moved filtering to after transformation
+- looked at Splatter, only available for R, will install later
+- made function to display ARI per level of hmPPCA
+
 
 ## Done for thursday (26-3)
 - Made cluster determination by AIC and BIC

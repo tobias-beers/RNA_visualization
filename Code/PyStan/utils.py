@@ -16,13 +16,22 @@ from sklearn.metrics import adjusted_rand_score
 sns.set()
 
 
-def loadStan(file, recompile=False, automatic_pickle = True):
+def loadStan(file, recompile=False, automatic_pickle = True, parallel=False):
+    if parallel:
+        file_p = file+'_p'
+        os.environ['STAN_NUM_THREADS'] = "8"
+        extra_compile_args = ['-pthread', '-DSTAN_THREADS']
+    else:
+        file_p = file
     if recompile:
         try:
-            model = pystan.StanModel(file = 'StanModels/'+file+'.stan')
+            if parallel:
+                model = pystan.StanModel(file = 'StanModels/'+file+'.stan', extra_compile_args=extra_compile_args)
+            else:
+                model = pystan.StanModel(file = 'StanModels/'+file+'.stan')
             print('Model compiled succesfully.')
             if automatic_pickle:
-                with open('pickled_models/'+file+'.pkl', 'wb') as f:
+                with open('pickled_models/'+file_p+'.pkl', 'wb') as f:
                     pickle.dump(model, f)
                 print('Model saved succesfully to cache.')
         except FileNotFoundError:
@@ -31,14 +40,17 @@ def loadStan(file, recompile=False, automatic_pickle = True):
             print('Could not compile! Error in code maybe!')
     else:
         try:
-            model = pickle.load(open('pickled_models/'+file+'.pkl', 'rb'))
+            model = pickle.load(open('pickled_models/'+file_p+'.pkl', 'rb'))
             print('Model loaded succesfully from cache.')
         except:
             try:
-                model = pystan.StanModel(file = 'StanModels/'+file+'.stan')
+                if parallel:
+                    model = pystan.StanModel(file = 'StanModels/'+file+'.stan', extra_compile_args=extra_compile_args)
+                else:
+                    model = pystan.StanModel(file = 'StanModels/'+file+'.stan')
                 print('Model compiled succesfully.')
                 if automatic_pickle:
-                    with open('pickled_models/'+file+'.pkl', 'wb') as f:
+                    with open('pickled_models/'+file_p+'.pkl', 'wb') as f:
                         pickle.dump(model, f)
                     print('Model saved succesfully to cache.')
             except FileNotFoundError:
@@ -70,25 +82,68 @@ def GAP(points, k_max=2, nref=10):
 
     return list(range(1,k_max+1))[np.argmax(gap)], kmeans_list[np.argmax(gap)], gap
 
-def est_k(points, k_max = 2, refs = 3, method='aic', verbose=False):
+def est_k(points,k_min = 1, k_max = 2, refs = 3, retry=2, method='bic', verbose = False, gmm=False, weights=None):
+    
+    quit = False
     clus = []
     aics = []
     bics = []
     mods = []
-    for k in range(1,k_max+1):
+    
+    N, D = np.shape(points)
+    if k_min>=k_max:
+        print('k_min must be smaller than k_max!')
+    if np.all(weights==None):
+        weights = np.ones(N)
+    for k in range(k_min,k_max+1):
+        if quit:
+            continue
         if k ==1:    # for k=1, the result will always be the same, no need for multiple testing
-            model = KMeans(k).fit(points)
-            mods.append(model)
-            clus.append(k)
-            a, b =kmeans_AIC(points,model, verbose=verbose)
-            aics.append(a)
-            bics.append(b)
+            n_ref = 1
         else:
-            for ref in range(refs):
-                model = KMeans(k).fit(points)
-                mods.append(model)
+            n_ref = refs
+        for ref in range(n_ref):
+            if verbose:
+                print('%i clusters, model %i of %i'%(k,ref+1,n_ref))
+            model = KMeans(k).fit(points)
+            if verbose:
+                print('Model built!')
+            model_data = {}
+            theta = [np.sum(model.labels_==k_i)/N for k_i in range(k)]
+            if gmm:
+                count = 0 
+                while True:
+                    if verbose:
+                        print('Building GMM model with %i clusters'%k)
+                    gmm_dat = {'N': N,'K': k, 'D':D, 'y':points, 'weights':weights}
+                    fit = gmm_diag_weighted.sampling(data=gmm_dat, chains=1, iter=150, init=[{'mu':model.cluster_centers_, 'theta':theta}])
+                    if verbose:
+                        print('Model built!')
+                    fit_ext = fit.extract()
+                    z_sim = np.mean(fit_ext['z'],axis=0)
+                    labels = np.argmax(z_sim, axis=1)
+                    if np.all(np.array([sum(labels==k_i) for k_i in range(k)])>1):
+                        a, b =kmeans_AIC(points,labels, k, verbose=verbose)
+                        model_data['mu'] = np.mean(fit_ext['mu'],axis=0)
+                        model_data['theta'] = np.mean(fit_ext['theta'],axis=0)
+                        model_data['labels'] = labels
+                        break
+                    count+=1
+                    print('Failed to find model with right number of clusters (trial %i of %i)'%(count,retry))
+                    if count>=retry:
+                        print('No model with ', k, ' clusters found, showing cluster estimates with k_max at ',k-1)
+                        quit = True
+                        break
+            else:
+                a, b =kmeans_AIC(points,model.labels_, k, verbose=verbose)
+                model_data['mu'] = model.cluster_centers_
+                model_data['theta'] = theta
+                model_data['labels'] = model.labels_
+            
+            
+            if quit == False:
+                mods.append(model_data)
                 clus.append(k)
-                a, b =kmeans_AIC(points,model, verbose=verbose)
                 aics.append(a)
                 bics.append(b)
     if clus[np.argmin(aics)]!=clus[np.argmin(bics)]:
@@ -103,19 +158,28 @@ def est_k(points, k_max = 2, refs = 3, method='aic', verbose=False):
         print("Choose 'aic' or 'bic' as method!")
         return 1
     
-def kmeans_AIC(points, model, verbose=False):
-    theta = np.array([sum(model.labels_==k) for k in range(model.n_clusters)])/np.shape(points)[0]
-    probs = np.zeros((np.shape(points)[0],model.n_clusters))
-    for k in range(model.n_clusters):
-        probs[:,k] = multivariate_normal.logpdf(points, mean=model.cluster_centers_[k], cov=np.std(points[model.labels_==k].T)) 
+def kmeans_AIC(points, labels, K, verbose = False):
+    if verbose:
+        print('Evaluating %i clusters'%K)
+    N,D = np.shape(points)
+    probs = np.zeros((N,K))
+    theta = [np.sum(labels==k)/K for k in range(K)]
+    mu = [np.mean(points[labels==k],axis=0) for k in range(K)]
+    sigmas = [np.std(points[labels==k],axis=0) for k in range(K)]
+
+    for k in range(K):
+        probs[:,k] = multivariate_normal.logpdf(points, mean=mu[k], cov=np.diag(sigmas[k]), allow_singular=True) 
+        
     probs+=np.log(theta)
     llh = np.sum(logsumexp(probs,axis=1))
-    
-    aic = -2*llh + 2*np.shape(points)[1]*model.n_clusters
-    bic = -2*llh + np.log(np.shape(points)[0])*np.shape(points)[1]*model.n_clusters
+
+    aic = -2*llh + 2*K*D
+    bic = -2*llh + np.log(N)*K*D
     if verbose:
-        print('n_clusters: ',model.n_clusters, ', AIC: ',aic, ', BIC: ',bic)
+        print('Evaluation complete: n_clusters: ',K, ', AIC: ',aic, ', BIC: ',bic)
+        print()
     return aic, bic
+
 
 class hierarchical_model:
     
@@ -125,7 +189,7 @@ class hierarchical_model:
         self.mus = [[]]
         self.cats_per_lvl = []
     
-    def fit(self,x, M=2, max_depth=5, k_max = 2, plotting=True, min_clus_size=10, vis_threshold=0.05):
+    def fit(self,x, M=2, max_depth=5, k_max = 2, plotting=True, min_clus_size=10, vis_threshold=0.05, gmm = False):
         
         # initialize the algorithm
         self.M = M
@@ -139,6 +203,11 @@ class hierarchical_model:
         self.N = N
         self.probs = [np.ones(self.N)[np.newaxis].T]
         self.colors = [np.random.uniform(size=3) for k in range(k_max**max_depth)]
+        
+        if gmm:
+            est_ref = 1
+        else:
+            est_ref = 2
 
         # top-level latent data
         print('Latent data on top level:')
@@ -150,8 +219,8 @@ class hierarchical_model:
         self.latent[-1].append(latent_top)
 
         # top-level cluster determination
-        K_1, clusters_1 = est_k(x)
-        self.mus[-1].append(clusters_1.cluster_centers_)
+        K_1, clusters_1 = est_k(x, k_max = k_max, gmm = gmm, refs = est_ref)
+        self.mus[-1].append(clusters_1['mu'])
         print('Estimated number of clusters (level 0): ', K_1)
         
         # in case M>3, find out which three dimensions to plot in 3D
@@ -200,17 +269,20 @@ class hierarchical_model:
             
             # analyze all subclusters as found in the last level
             for cl in range(n_clus):
+                
+                clus_probs = cur_probs[:,cl]
+                
                 # Dont divide clusters further if they are too small
                 if sum(cats==cl)>k_max:
-                    n_subs, subs = est_k(x[cats==cl], k_max = k_max)
-                    while np.any([sum(subs.labels_==k_i)<min_clus_size for k_i in range(n_subs)]):
+                    n_subs, subs = est_k(x[cats==cl], k_max = k_max, gmm = gmm, refs = est_ref, weights=cur_probs)
+                    while np.any([sum(subs['labels']==k_i)<min_clus_size for k_i in range(n_subs)]):
                         if n_subs <= 2:
                             n_subs = 1
                             break
-                        n_subs, subs = est_k(x[cats==cl], k_max = n_subs-1)
+                        n_subs, subs = est_k(x[cats==cl], k_max = n_subs-1, gmm = gmm, refs = est_ref, weights=cur_probs)
                 else:
                     n_subs = 1
-                clus_probs = cur_probs[:,cl]
+                
                 if n_subs == 1:
                     # If cluster doesnt contain more subclusters, just copy it over to the next level
                     print('Cluster ', cl+1, ' doesnt contain any more subclusters')
@@ -237,8 +309,14 @@ class hierarchical_model:
                     # If cluster contains more subclusters, initiate MoPPCAs
                     more_depth = True
                     print('Cluster ', cl+1, ' contains ',n_subs,' subclusters')
-                    moppcas_dat = {'N':N, 'M':M,'K':n_subs, 'D':D, 'y':x, 'weights':clus_probs}
-                    fit = moppcas_weighted.sampling(data=moppcas_dat, chains=1, iter=100, init=[{'mu':subs.cluster_centers_}])
+                    try:
+                        moppcas_dat = {'N':N, 'M':M,'K':n_subs, 'D':D, 'y':x, 'weights':clus_probs}
+                        fit = moppcas_weighted.sampling(data=moppcas_dat, chains=1, iter=100, init=[{'mu':subs['mu']}])
+                    except:
+                        print(moppcas_dat)
+                        print(subs['mu'])
+                        return 'Error!'
+                    
                     fit_ext_molv1 = fit.extract()
                     best_molv1 = np.where(fit_ext_molv1['lp__']==max(fit_ext_molv1['lp__']))[0][0]
                     cur_latent = fit_ext_molv1['z'][best_molv1]
@@ -314,7 +392,7 @@ class hierarchical_model:
                 rgba_colors = np.zeros((self.N, 4))
                 for k_i in range(int(max(categories))):
                     rgba_colors[categories==k_i,:3] = self.colors[k_i]
-                if np.shape(self.probs[lvl])[0]==N:
+                if np.shape(self.probs[lvl])[0]==self.N:
                     n_cat = np.shape(self.probs[lvl])[1]
                     prob_cur = self.probs[lvl]
                 else:
@@ -323,10 +401,10 @@ class hierarchical_model:
                 for k_i in range(n_cat):
                     rgba_colors[:,3] = prob_cur[:,lat]
                 vis_mask = np.array(prob_cur[:,lat]>vis_threshold)
-                if M==2:
+                if self.M==2:
                     ax = fig.add_subplot(int((n_lat-1)/4)+1, min(n_lat, 4), lat+1)
                     ax.scatter(self.latent[lvl][lat][0,vis_mask],self.latent[lvl][lat][1,vis_mask],c = rgba_colors[vis_mask,:])
-                if M>2:
+                if self.M>2:
                     ax = fig.add_subplot(int((n_lat-1)/4)+1, min(n_lat, 4), lat, projection='3d')
                     ax.scatter(self.latent[lvl][lat][self.dimx,vis_mask],self.latent[lvl][lat][self.dimy,vis_mask],self.latent[lvl][lat][self.dimz,vis_mask],c = rgba_colors[vis_mask,:])
             plt.suptitle('Clusters on level '+str(lvl))
@@ -378,7 +456,7 @@ class hierarchical_model:
                 prob_cur = self.probs[-1].T
             for k_i in range(n_cat):
                 rgba_colors[:,3] = prob_cur[:,lat]
-            vis_mask = np.array(prob_cur[:,lat]>self.vis_threshold)
+            vis_mask = np.array(prob_cur[:,lat]>vis_threshold)
             if self.M==2:
                 ax = fig.add_subplot(int((n_lat-1)/4)+1, min(n_lat, 4), lat+1)
                 ax.scatter(self.latent[-1][lat][0,vis_mask],self.latent[-1][lat][1,vis_mask],c = rgba_colors[vis_mask,:])

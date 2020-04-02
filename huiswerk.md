@@ -8,6 +8,11 @@ myself.
 	- normalisatie
 - uitzoeken wat nestorowa met data heeft gedaan
 - gmm met diagonale cov matrix ipv kmeans
+- filteren na transformatie
+- splatter bekijken
+- model evaluatie door celltypes te scheiden mbv eenvoudige classifier
+- evalueren impact van filtering, bottlenecks opzoeken
+
 
 ### 17-3
 - AIC/BIC to estimate number of clusters
