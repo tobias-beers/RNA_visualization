@@ -466,3 +466,8 @@ class hierarchical_model:
         plt.suptitle(title)
         plt.show()
         return
+    
+    def ari_per_level(self, ind):
+        lvls = len(self.cats_per_lvl)
+        return [adjusted_rand_score(self.cats_per_lvl[lvl], ind) for lvl in range(lvls)]
+            

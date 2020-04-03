@@ -2,6 +2,12 @@
 These are just some quick notes on what to do for the coming time for 
 myself.
 
+### 2-4
+- meetbaarheid celltype separability met gewogen multinom regressie (gewogen zowel bij trainen als testen)
+- data simuleren met splatter
+- tensorflow bekijken moppcas
+
+
 ### 26-3
 - transformeren data
 	- log2(data+1)
