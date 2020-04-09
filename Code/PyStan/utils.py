@@ -189,7 +189,7 @@ class hierarchical_model:
         self.mus = [[]]
         self.cats_per_lvl = []
     
-    def fit(self,x, M=2, max_depth=5, k_max = 2, plotting=True, min_clus_size=10, vis_threshold=0.05, gmm = False):
+    def fit(self,x, M=2, max_depth=5, k_max = 2, plotting=True, min_clus_size=10, vis_threshold=0.05, gmm = False, its=300):
         
         # initialize the algorithm
         self.M = M
@@ -212,7 +212,7 @@ class hierarchical_model:
         # top-level latent data
         print('Latent data on top level:')
         ppca_dat = {'N':N, 'M':M, 'D':D, 'x':x, 'weights': self.probs[-1][:,0]}
-        fit_top = ppca_weighted.sampling(data=ppca_dat, iter=200, chains=1)
+        fit_top = ppca_weighted.sampling(data=ppca_dat, iter=its, chains=1)
         fitreturn_top = fit_top.extract()
         best_ind_top = np.where(fitreturn_top['lp__']==max(fitreturn_top['lp__']))[0][0]
         latent_top = fitreturn_top['z'][best_ind_top]
@@ -309,13 +309,13 @@ class hierarchical_model:
                     # If cluster contains more subclusters, initiate MoPPCAs
                     more_depth = True
                     print('Cluster ', cl+1, ' contains ',n_subs,' subclusters')
-                    try:
-                        moppcas_dat = {'N':N, 'M':M,'K':n_subs, 'D':D, 'y':x, 'weights':clus_probs}
-                        fit = moppcas_weighted.sampling(data=moppcas_dat, chains=1, iter=100, init=[{'mu':subs['mu']}])
-                    except:
-                        print(moppcas_dat)
-                        print(subs['mu'])
-                        return 'Error!'
+#                     try:
+                    moppcas_dat = {'N':N, 'M':M,'K':n_subs, 'D':D, 'y':x, 'weights':clus_probs}
+                    fit = moppcas_weighted.sampling(data=moppcas_dat, chains=1, iter=its, init=[{'mu':subs['mu'],'z':[np.zeros((M,self.N)) for i in range(n_subs)]}])
+#                     except:
+#                         print(moppcas_dat)
+#                         print(subs['mu'])
+#                         return 'Error!'
                     
                     fit_ext_molv1 = fit.extract()
                     best_molv1 = np.where(fit_ext_molv1['lp__']==max(fit_ext_molv1['lp__']))[0][0]
@@ -470,4 +470,103 @@ class hierarchical_model:
     def ari_per_level(self, ind):
         lvls = len(self.cats_per_lvl)
         return [adjusted_rand_score(self.cats_per_lvl[lvl], ind) for lvl in range(lvls)]
+    
+    def visual_score(self, ind, plot_hmppca = True, plot_hmppca_logres = False, plot_real = True, plot_logreg = True):
+        for lvl in range(len(self.latent)):
+
+            lvl_i = min(len(self.latent)-1, lvl+1)
+
+            if plot_hmppca:
+
+                nclus = len(self.latent[lvl])
+                print('level ', lvl)
+                fig = plt.figure(figsize=(min(nclus*4, 24),5*(int(nclus/6)+1)))
+                for clus in range(nclus):
+                    ax = fig.add_subplot(int(nclus/6)+1,min(nclus,6),clus+1)
+                    mask = self.probs[lvl][:,clus]>0.1
+                    rgba_cols = np.zeros((N,4))
+                    for k_i in set(self.cats_per_lvl[lvl_i][np.argmax(self.probs[lvl],axis=1)==clus]):
+                        rgba_cols[self.cats_per_lvl[lvl_i]==k_i,:3] = self.colors[k_i]
+                        rgba_cols[self.cats_per_lvl[lvl_i]==k_i,3] = self.probs[lvl][self.cats_per_lvl[lvl_i]==k_i,clus]
+                        if lvl<len(self.latent)-1:
+                            cc_x, cc_y = np.average(self.latent[lvl][clus], axis=1, weights = self.probs[lvl_i][:,k_i])
+                            plt.scatter(cc_x, cc_y, s = 500, c = 'black', zorder=9)
+                            plt.text(cc_x, cc_y, str(k_i+1),fontweight= 'bold', size=14, c = 'white', zorder=10,horizontalalignment='center',
+                verticalalignment='center')
+                    ax.scatter(self.latent[lvl][clus][0,:][mask],self.latent[lvl][clus][1,:][mask], c=rgba_cols[mask,:], zorder=1)
+                    ax.set_title('subcluster '+str(clus+1))
+                plt.suptitle('HmPPCA clusters')
+                plt.show()
+
+
+            if plot_hmppca_logres:
+                fig = plt.figure(figsize=(min(nclus*4, 24),5*(int(nclus/6)+1)))
+                c_i = 0
+                for clus in range(len(self.latent[lvl])):
+
+                    classifier = sklearn.linear_model.SGDClassifier(loss='log')
+                    classifier.fit(self.latent[lvl][clus].T, self.cats_per_lvl[lvl_i], sample_weight=self.probs[lvl][:,clus])
+                    preds = classifier.predict(self.latent[lvl][clus].T)
+                    preds = np.unique(preds, return_inverse=True)[1]
+
+                    ax = fig.add_subplot(int(nclus/6)+1,min(nclus,6),clus+1)
+                    mask = self.probs[lvl][:,clus]>0.1
+                    rgba_cols = np.ones((N,4))
+
+                    for k_i in range(len(set(preds))):
+                        rgba_cols[preds==k_i,:3] = self.colors[c_i]
+                        c_i+=1
+
+                    ax.scatter(self.latent[lvl][clus][0,:][mask],self.latent[lvl][clus][1,:][mask], c=rgba_cols[mask,:])
+                plt.suptitle('log.reg. clusters (based on hmppca)')
+                plt.show()
+
+            if plot_real:
+                fig = plt.figure(figsize=(min(nclus*4, 24),5*(int(nclus/6)+1)))
+                for clus in range(len(self.latent[lvl])):
+                    ax = fig.add_subplot(int(nclus/6)+1,min(nclus,6),clus+1)
+                    mask = self.probs[lvl][:,clus]>0.1
+                    rgba_cols = np.ones((N,4))
+                    for k_i in range(len(set(ind))):
+                        rgba_cols[ind==k_i,:] = self.colors[k_i]
+                    ax.scatter(self.latent[lvl][clus][0,:][mask],self.latent[lvl][clus][1,:][mask], c=rgba_cols[mask,:])
+                plt.suptitle('Real clusters')
+                plt.show()
+
+            if plot_logreg:
+                fig = plt.figure(figsize=(min(nclus*4, 24),5*(int(nclus/6)+1)))
+                c_i = 0
+                w_ARI = 0
+                w_ACC = 0
+                for clus in range(len(self.latent[lvl])):
+
+                    classifier = sklearn.linear_model.SGDClassifier(loss='log')
+                    classifier.fit(self.latent[lvl][clus].T, ind, sample_weight=self.probs[lvl][:,clus])
+                    preds = classifier.predict(self.latent[lvl][clus].T)
+
+                    ax = fig.add_subplot(int(nclus/6)+1,min(nclus,6),clus+1)
+                    mask = self.probs[lvl][:,clus]>0.1
+                    rgba_cols = np.zeros((N,4))
+
+                    for k_i in set(preds):
+                        rgba_cols[preds==k_i,:] = cols[int(k_i)]
+                        c_i+=1
+                    rgba_cols[:,3] = np.ones(N)
+                    ax.scatter(model.latent[lvl][clus][0,:][mask],self.latent[lvl][clus][1,:][mask], c=rgba_cols[mask,:])
+                    ari = adjusted_rand_score(preds[mask], ind[mask])
+                    acc = accuracy_score(preds, ind, sample_weight = self.probs[lvl][:,clus])
+                    ax.set_title('Cluster %i - ARI: %.3f, ACC: %.3f'%(clus+1,ari,acc))
+                    w_ARI+= ari*(sum(mask))/N
+                    w_ACC+= acc*(sum(mask))/N
+                plt.suptitle('log.reg. - w. ARI: %.3f, w. ACC: %.3f'%(w_ARI, w_ACC))
+                plt.show()
             
+def weighted_Accuracy(true, weights):
+    
+    total = 0
+    correct = 0
+    for i in range(len(true)):
+        total+=1
+        correct+=weights[i,int(true[i])]
+        
+    return correct/total

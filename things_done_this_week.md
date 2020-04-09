@@ -1,4 +1,14 @@
+## Done for thursday (9-4)
+
+- Installed R and splatter, simulated 2 datasets
+- fixed problem where pystan wouldnt initialize i hope
+- included script for weighted multinomial log. regression
+- script now produces (weighted) ARI
+- script now also produces weighted accuracy, since ARI got confused over single-class clusters
+
+
 ## Done for thursday (2-04)
+
 - Solved negative numbers in Nestorowa data
 - Looked at transformation and normalization Nestorowa data, only found 
 that nomalizationw as performed with Rpackage Combat.
@@ -10,6 +20,7 @@ that nomalizationw as performed with Rpackage Combat.
 
 
 ## Done for thursday (26-3)
+
 - Made cluster determination by AIC and BIC
 	- Solved underflow problem in cluster determination
 	- evaluated performance of both, AIC is good, bic is better

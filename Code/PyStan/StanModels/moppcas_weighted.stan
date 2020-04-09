@@ -7,19 +7,9 @@ data {
   vector<lower=0, upper=1>[N] weights;       // weights
 }
 
-parameters {
-  simplex[K] theta;          // mixing proportions
-  vector[D] mu[K];            // locations of mixture components
-  real<lower=0,upper=5> sigma[K];  // scales of mixture components
-  matrix[M,N] z[K];  // latent data
-  matrix[D,M] W[K];  // factor loadings
-  
-}
-
-transformed parameters{
+transformed data{
     vector[M] mean_z;
     matrix[M,M] cov_z;
-    matrix[D,D] covs[K];
     
     for (m in 1:M){
         mean_z[m] = 0.0;
@@ -31,6 +21,19 @@ transformed parameters{
             }
         }
     }
+}
+
+parameters {
+  simplex[K] theta;          // mixing proportions
+  vector[D] mu[K];            // locations of mixture components
+  real<lower=0,upper=5> sigma[K];  // scales of mixture components
+  matrix[M,N] z[K];  // latent data
+  matrix[D,M] W[K];  // factor loadings
+  
+}
+
+transformed parameters{
+    matrix[D,D] covs[K];
     
     for (k in 1:K){
         for (i in 1:D){
