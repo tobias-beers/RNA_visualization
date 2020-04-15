@@ -2,6 +2,14 @@
 These are just some quick notes on what to do for the coming time for 
 myself.
 
+### 9-4
+- kijken of optimalizatie/vb sneller werkt
+- anders parallelisatie of tensorflow proberen
+- misschien vragen op forum naar pystan versnelling
+- schrijven, iets meer over pystan sampling
+- uitzoeken variational bayes en NUTS sampling
+
+
 ### 2-4
 - meetbaarheid celltype separability met gewogen multinom regressie (gewogen zowel bij trainen als testen)
 - data simuleren met splatter

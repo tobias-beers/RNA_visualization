@@ -26,10 +26,9 @@ transformed data{
 parameters {
   simplex[K] theta;          // mixing proportions
   vector[D] mu[K];            // locations of mixture components
-  real<lower=0,upper=5> sigma[K];  // scales of mixture components
+  real<lower=0> sigma[K];  // scales of mixture components
   matrix[M,N] z[K];  // latent data
   matrix[D,M] W[K];  // factor loadings
-  
 }
 
 transformed parameters{
@@ -62,11 +61,11 @@ model {
         for (k in 1:K){
             probclus[k] = exp(log_theta[k]+multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k])+multi_normal_lpdf(z[k][:,n]|mean_z, cov_z));
         }
+        //probclus = probclus/sum(probclus);
         for (k in 1:K){
             prob_in_clus = probclus[k]/sum(probclus);
             //target += weights[n]*prob_in_clus*log_theta[k];
-            target += weights[n]*prob_in_clus*multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k]);
-            target += weights[n]*prob_in_clus*multi_normal_lpdf(z[k][:,n]|mean_z, cov_z);
+            target += weights[n]*prob_in_clus*(multi_normal_lpdf(y[n,:] | W[k]*col(z[k],n)+mu[k], covs[k])+multi_normal_lpdf(z[k][:,n]|mean_z, cov_z));
         }
     }
 }

@@ -9,6 +9,7 @@ from sklearn import datasets
 import os
 import pickle
 import scipy
+import pandas as pd
 from scipy.special import logsumexp
 from sklearn.cluster import SpectralClustering
 from scipy.stats import norm,multivariate_normal
@@ -189,7 +190,7 @@ class hierarchical_model:
         self.mus = [[]]
         self.cats_per_lvl = []
     
-    def fit(self,x, M=2, max_depth=5, k_max = 2, plotting=True, min_clus_size=10, vis_threshold=0.05, gmm = False, its=300):
+    def fit(self,x, M=2, max_depth=5, k_max = 2, plotting=True, min_clus_size=10, vis_threshold=0.05, gmm = False, its=300, samplingmethod='vb'):
         
         # initialize the algorithm
         self.M = M
@@ -212,10 +213,21 @@ class hierarchical_model:
         # top-level latent data
         print('Latent data on top level:')
         ppca_dat = {'N':N, 'M':M, 'D':D, 'x':x, 'weights': self.probs[-1][:,0]}
-        fit_top = ppca_weighted.sampling(data=ppca_dat, iter=its, chains=1)
-        fitreturn_top = fit_top.extract()
-        best_ind_top = np.where(fitreturn_top['lp__']==max(fitreturn_top['lp__']))[0][0]
-        latent_top = fitreturn_top['z'][best_ind_top]
+        if samplingmethod == 'vb':
+            fit = ppca_weighted.vb(data=ppca_dat)
+            df = pd.read_csv(fit['args']['sample_file'].decode('ascii'), comment='#').dropna()
+            dfmean = df.mean()
+            dfz = dfmean[dfmean.index.str.startswith('z.')]
+            latent_top = np.array(dfz).reshape(self.N, M).T
+        elif samplingmethod == 'NUTS':
+            fit_top = ppca_weighted.sampling(data=ppca_dat, iter=its, chains=1)
+            fitreturn_top = fit_top.extract()
+            best_ind_top = np.where(fitreturn_top['lp__']==max(fitreturn_top['lp__']))[0][0]
+            latent_top = fitreturn_top['z'][best_ind_top]
+        else:
+            print("Please use 'NUTS' or 'vb' as samplingmethod!")
+            return 1
+        
         self.latent[-1].append(latent_top)
 
         # top-level cluster determination
@@ -311,21 +323,35 @@ class hierarchical_model:
                     print('Cluster ', cl+1, ' contains ',n_subs,' subclusters')
 #                     try:
                     moppcas_dat = {'N':N, 'M':M,'K':n_subs, 'D':D, 'y':x, 'weights':clus_probs}
-                    fit = moppcas_weighted.sampling(data=moppcas_dat, chains=1, iter=its, init=[{'mu':subs['mu'],'z':[np.zeros((M,self.N)) for i in range(n_subs)]}])
-#                     except:
-#                         print(moppcas_dat)
-#                         print(subs['mu'])
-#                         return 'Error!'
+                    if samplingmethod == 'vb':
+#                         if lvl==0:
+#                             fit = pickle.load(open('smallsplat_vb.pkl', 'rb'))
+#                         else:
+                        fit = moppcas_weighted.vb(data=moppcas_dat, init=[{'mu':subs['mu'], 'theta':subs['theta'], 'z':[np.zeros((M,self.N)) for i in range(n_subs)]}])
+                        df = pd.read_csv(fit['args']['sample_file'].decode('ascii'), comment='#').dropna()
+                        dfmean = df.mean()
+                        dfz = dfmean[dfmean.index.str.startswith('z.')]
+                        cur_latent = np.array(dfz).reshape(self.N, M, n_subs).T
+                        dfclus = dfmean[dfmean.index.str.startswith('clusters.')]
+                        rawprobs = np.array(dfclus).reshape(n_subs,self.N).T
+                    elif samplingmethod == 'NUTS':
+                        fit = moppcas_weighted.sampling(data=moppcas_dat, chains=1, iter=its, init=[{'mu':subs['mu'],
+                                                                                                     'z':[np.zeros((M,self.N)) for i in range(n_subs)]}])
+                        fit_ext_molv1 = fit.extract()
+                        best_molv1 = np.where(fit_ext_molv1['lp__']==max(fit_ext_molv1['lp__']))[0][0]
+                        cur_latent = fit_ext_molv1['z'][best_molv1]
+                        rawprobs = np.mean(fit_ext_molv1['clusters'],axis=0).T
+                    else:
+                        print("Please use 'NUTS' or 'vb' as samplingmethod!")
+                        return 1
                     
-                    fit_ext_molv1 = fit.extract()
-                    best_molv1 = np.where(fit_ext_molv1['lp__']==max(fit_ext_molv1['lp__']))[0][0]
-                    cur_latent = fit_ext_molv1['z'][best_molv1]
-                    new_probs = (np.mean(fit_ext_molv1['clusters'],axis=0).T*clus_probs).T
+                        
+                    new_probs = (rawprobs*clus_probs[np.newaxis].T).T
                     plotcats = np.argmax(new_probs, axis=1)
                     
                     # and plot latent data of all newfound subclusters if chosen so
                     for i,l in enumerate(cur_latent):
-                        plotprobs = new_probs[:,i]
+                        plotprobs = new_probs[i,:]
                         mask = plotprobs>vis_threshold
                         self.latent[-1].append(l)
                         if plotting:
@@ -348,7 +374,11 @@ class hierarchical_model:
                     probs_round = new_probs
                 else:
                     probs_round = np.hstack((probs_round, new_probs))
-
+            
+            
+            if np.shape(probs_round)[0]==self.N:
+                probs_round = probs_round.T
+#             print(lvl, np.shape(probs_round))
             cats = np.argmax(probs_round,axis=1)
             
             # Plotting Top-level latent data with new cluster-colouring
@@ -357,11 +387,11 @@ class hierarchical_model:
                 ax = fig.add_subplot(111)
             if M>2:
                 ax = fig.add_subplot(111, projection='3d')
-            for c in range(np.shape(probs_round)[1]):
-                mask = probs_round[:,c]>vis_threshold
+            for c in range(np.shape(probs_round)[0]):
+                mask = probs_round[c,:]>vis_threshold
                 rgba_colors = np.zeros((sum(mask),4))
                 rgba_colors[:,:3] = self.colors[c]
-                rgba_colors[:,3] = probs_round[:,c][mask]
+                rgba_colors[:,3] = probs_round[c,:][mask]
                 if M==2:
                     ax.scatter(self.latent[0][0][0,mask],self.latent[0][0][1,mask], c = rgba_colors)
                 if M>2:

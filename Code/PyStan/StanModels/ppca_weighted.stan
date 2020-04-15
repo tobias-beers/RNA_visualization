@@ -6,15 +6,7 @@ data{
     vector<lower=0, upper=1>[N] weights; // weights
 }
 
-
-parameters{
-    matrix[M,N] z;  // latent data
-    matrix[D,M] W;  // factor loadings
-    real<lower=0> sigma;   //  standard  deviations
-    vector[D] mu;   //  added means
-}
-
-transformed parameters{
+transformed data{
     vector[M] mean_z;
     matrix[M,M] cov_z;
     
@@ -28,6 +20,13 @@ transformed parameters{
             }
         }
     }
+}
+
+parameters{
+    matrix[M,N] z;  // latent data
+    matrix[D,M] W;  // factor loadings
+    real<lower=0> sigma;   //  standard  deviations
+    vector[D] mu;   //  added means
 }
 
 model{
