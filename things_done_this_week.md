@@ -1,3 +1,12 @@
+## Done for thursday (16-4)
+
+- Read up on ADVI paper, tried to summarize VB algorithm
+- Tested Variational Bayes
+- Implemented VB instead of NUTS sampling in algorithm
+- Found that VB doesn't always produce results, partly fixed this by altering VB code
+- Found that some results of VB are dubious
+
+
 ## Done for thursday (9-4)
 
 - Installed R and splatter, simulated 2 datasets
