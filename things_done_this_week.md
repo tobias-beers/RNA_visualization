@@ -1,3 +1,11 @@
+## Done for thursday (23-4)
+
+- Tried to fix MoPPCAs with VB
+	- found that GMM did not work with VB either, fixed it
+	- Wrote new MoPPCAs model, which works with VB
+	- Found that new models use is limited on splatter dataset
+
+
 ## Done for thursday (16-4)
 
 - Read up on ADVI paper, tried to summarize VB algorithm

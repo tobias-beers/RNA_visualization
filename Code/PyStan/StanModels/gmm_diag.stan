@@ -11,36 +11,42 @@ parameters {
   vector<lower=0>[D] sigma[K];  // covariance matrices of mixture components
 }
 
-transformed parameters {
-    matrix[D,D] covs[K];
+//transformed parameters {
+//    matrix[D,D] covs[K];
     
-    for (k in 1:K){
-        for (i in 1:D){
-            for (j in 1:D){
-                if (i==j){
-                    covs[k][i,j] = sigma[k][i];
-                } else {
-                    covs[k][i,j] = 0.0;
-                }
-            }
-        }
-    }
-}
+//    for (k in 1:K){
+//        for (i in 1:D){
+//            for (j in 1:D){
+  //              if (i==j){
+ //                   covs[k][i,j] = sigma[k][i];
+//                } else {
+//                    covs[k][i,j] = 0.0;
+//                }
+//            }
+//        }
+//    }
+//}
 
 model {
+    //real probclus[K]; 
+    //real prob_in_clus;
     vector[K] log_theta = log(theta);  // cache log calculation
     
     //for (k in 1:K){        // punish exlcusion of clusters
-        //if (theta[k]<1.0/(2*K)){
-            //target+= negative_infinity();
-        //}
+    //    if (theta[k]<1.0/(2*K)){
+    //        target+= negative_infinity();
+    //    }
     //}
     
     
     for (n in 1:N){
         vector[K] lps = log_theta;
+        //for (k in 1:K){
+          //  probclus[k] = exp(log_theta[k]+normal_lpdf(y[n,:] | mu[k], sigma[k]));
+        //}
         for (k in 1:K){
-            lps[k] += multi_normal_lpdf(y[n,:] | mu[k], covs[k]);
+            //prob_in_clus = probclus[k]/sum(probclus);
+            lps[k] += normal_lpdf(y[n,:] | mu[k], sigma[k]);
             }
             target += log_sum_exp(lps);
         }
@@ -48,12 +54,14 @@ model {
 
 generated quantities{
     matrix[N,K] z;
+    vector[K] log_theta = log(theta);
     
     for (n in 1:N){
+
         for (k in 1:K){
-            z[n,k] = multi_normal_lpdf(y[n,:]|mu[k], covs[k]);
-            z[n,k] += log(theta[k]);
+            z[n,k] = exp( log_theta[k] + normal_lpdf(y[n,:]|mu[k], sigma[k]) + log(theta[k]) );
         }
+        z[n,:] = z[n,:]/sum(z[n,:]);
     }
     
 }

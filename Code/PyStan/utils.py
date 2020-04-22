@@ -18,6 +18,7 @@ sns.set()
 
 
 def loadStan(file, recompile=False, automatic_pickle = True, parallel=False):
+    print('Loading model ', file)
     if parallel:
         file_p = file+'_p'
         os.environ['STAN_NUM_THREADS'] = "8"
@@ -140,6 +141,9 @@ def est_k(points,k_min = 1, k_max = 2, refs = 3, retry=2, method='bic', verbose 
                 model_data['mu'] = model.cluster_centers_
                 model_data['theta'] = theta
                 model_data['labels'] = model.labels_
+                model_data['min_mus'] = [np.min(points[model.labels_==k_i],axis=0) for k_i in range(k)]
+                model_data['max_mus'] = [np.max(points[model.labels_==k_i],axis=0) for k_i in range(k)]
+                model_data['sigmas'] = [np.max(np.std(points[model.labels_==k_i],axis=0)) for k_i in range(k)]
             
             
             if quit == False:
@@ -199,6 +203,8 @@ class hierarchical_model:
             print('Latent dimensions greater than 3, plotting only the three most important dimensions.')
         moppcas_weighted = loadStan('moppcas_weighted')
         ppca_weighted = loadStan('ppca_weighted')
+        
+        
 
         N,D = np.shape(x)
         self.N = N
@@ -266,7 +272,7 @@ class hierarchical_model:
 
         cats = np.argmax(self.probs[-1],axis=1)
         self.cats_per_lvl.append(cats.copy())
-
+        
         for lvl in range(max_depth):
             # repeat cluster detemination and MoPPCAs until max_depth is reached or until all clusters fully analyzed
             more_depth = False
@@ -322,19 +328,32 @@ class hierarchical_model:
                     more_depth = True
                     print('Cluster ', cl+1, ' contains ',n_subs,' subclusters')
 #                     try:
-                    moppcas_dat = {'N':N, 'M':M,'K':n_subs, 'D':D, 'y':x, 'weights':clus_probs}
+                    
                     if samplingmethod == 'vb':
 #                         if lvl==0:
 #                             fit = pickle.load(open('smallsplat_vb.pkl', 'rb'))
 #                         else:
-                        fit = moppcas_weighted.vb(data=moppcas_dat, init=[{'mu':subs['mu'], 'theta':subs['theta'], 'z':[np.zeros((M,self.N)) for i in range(n_subs)]}])
+                        moppcas_dat = {'N': N, 'M': M, 'K': n_subs, 'D':D, 'y':x, 'lim_sigma_up':5*np.array(subs['sigmas']), 'lim_mu_up':subs['max_mus'], 'lim_mu_low':subs['min_mus'], 'weights':clus_probs}
+#                         return subs, moppcas_dat
+#                         trial=0
+#                         while trial<10:
+#                             try:
+                        fit = moppcas_weighted.vb(data=moppcas_dat, init=[{'mu':subs['mu'], 'theta':subs['theta'], 'sigma':subs['sigmas']}])
                         df = pd.read_csv(fit['args']['sample_file'].decode('ascii'), comment='#').dropna()
+#                             except:
+#                                 trial+=1
+#                                 print(trial, ' wrong')
+#                             else:
+#                                 print(trial, ' good!')
+#                                 trial=10
+                        
                         dfmean = df.mean()
                         dfz = dfmean[dfmean.index.str.startswith('z.')]
-                        cur_latent = np.array(dfz).reshape(self.N, M, n_subs).T
-                        dfclus = dfmean[dfmean.index.str.startswith('clusters.')]
+                        cur_latent = np.array(dfz).reshape(self.N, M).T
+                        dfclus = dfmean[dfmean.index.str.startswith('R.')]
                         rawprobs = np.array(dfclus).reshape(n_subs,self.N).T
                     elif samplingmethod == 'NUTS':
+                        moppcas_dat = {'N':N, 'M':M,'K':n_subs, 'D':D, 'y':x, 'weights':clus_probs}
                         fit = moppcas_weighted.sampling(data=moppcas_dat, chains=1, iter=its, init=[{'mu':subs['mu'],
                                                                                                      'z':[np.zeros((M,self.N)) for i in range(n_subs)]}])
                         fit_ext_molv1 = fit.extract()

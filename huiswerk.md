@@ -2,6 +2,14 @@
 These are just some quick notes on what to do for the coming time for 
 myself.
 
+### 16-4
+- priors aan model toevoegen (sigma <- inv. gamma distr.)
+- vb proberen met gewone gaussian mixture models
+- kijk naar convergentie sampling en vb
+- log likelihood per level
+- advi/vb en nuts sampling beter begrijpen
+
+
 ### 9-4
 - kijken of optimalizatie/vb sneller werkt
 - anders parallelisatie of tensorflow proberen
