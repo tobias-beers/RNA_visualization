@@ -1,3 +1,9 @@
+## Done for thursday (30-4)
+
+- Tried to vectorize computation of R matrix in Moppcas2.stan, turns out 'normal_lpdf' only takes vectors as input and not matrices, so vectorization is not possible.
+
+
+
 ## Done for thursday (23-4)
 
 - Tried to fix MoPPCAs with VB

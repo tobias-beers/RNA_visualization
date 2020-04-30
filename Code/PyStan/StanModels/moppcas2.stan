@@ -12,7 +12,7 @@ data {
 parameters {
   simplex[K] theta;          // mixing proportions
   vector<lower=0, upper=1>[D] raw_mu[K];            // locations of mixture components
-  real<upper=0> raw_sigma[K];  // covariance matrices of mixture components
+  real<lower=0, upper=1> raw_sigma[K];  // covariance matrices of mixture components
   matrix[N,M] z;   // latent data
   matrix[D,M] W[K];   // factor loadings
 }
@@ -28,7 +28,7 @@ transformed parameters {
     
     for (k in 1:K){
         mu[k] = lim_mu_low[k] + (lim_mu_up[k]-lim_mu_low[k]).*raw_mu[k];
-        sigma[k] = raw_sigma[k] + lim_sigma_up[k];
+        sigma[k] = 0.001 + (lim_sigma_up[k]-0.001)*raw_sigma[k];
     }
     
     for (i in 1:M){
@@ -46,10 +46,19 @@ transformed parameters {
     
     for (n in 1:N){
         for (k in 1:K){
-            R[n,k] = exp( log(theta[k]) + normal_lpdf(y[n,:] | W[k]*z[n,:]'+mu[k], sigma[k]) );
+            //R[n,k] = exp( log(theta[k]) + normal_lpdf(y[n,:] | W[k]*z[n,:]'+mu[k], sigma[k]) );
+            R[n,k] = log(theta[k]) + normal_lpdf(y[n,:] | W[k]*z[n,:]'+mu[k], sigma[k]);
+            //R[:,k] = exp( log(theta[k]) + normal_lpdf(y | W[k]*z'+rep_matrix(mu[k],N), sigma[k]) );
+        }
+        R[n,:] = R[n,:] - max(R[n,:]);
+        for (k in 1:K){
+            R[n,k] = exp(R[n,k]);
         }
         R[n,:] = R[n,:]/sum(R[n,:]);
     }
+    //for (n in 1:N){
+    //    R[n,:] = R[n,:]/sum(R[n,:]);
+    //}
 
     for (k in 1:K){
         dir_prior[k]=1.0;

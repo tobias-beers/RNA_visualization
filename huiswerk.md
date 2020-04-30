@@ -2,6 +2,13 @@
 These are just some quick notes on what to do for the coming time for 
 myself.
 
+### 23-04
+- reparametrization pystan for underflow
+- vectorization pystan
+- ondergrens sigma
+- for-loopje R moppcas omgooien, vector over N
+- meer priors
+
 ### 16-4
 - priors aan model toevoegen (sigma <- inv. gamma distr.)
 - vb proberen met gewone gaussian mixture models
