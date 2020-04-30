@@ -659,7 +659,7 @@ class hierarchical_model:
         for lvl in range(len(self.latent)):
 
             lvl_i = min(len(self.latent)-1, lvl+1)
-            nclus = len(set(self.cats_per_level[lvl]))
+            nclus = len(set(self.cats_per_lvl[lvl]))
             print('level ', lvl)
             if plot_hmppca:
 
