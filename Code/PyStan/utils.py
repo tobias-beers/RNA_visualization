@@ -4,6 +4,7 @@ import pystan
 import numpy as np
 import seaborn as sns
 import itertools
+import sklearn
 from sklearn.cluster import KMeans
 from sklearn import datasets
 import os
@@ -13,7 +14,7 @@ import pandas as pd
 from scipy.special import logsumexp
 from sklearn.cluster import SpectralClustering
 from scipy.stats import norm,multivariate_normal
-from sklearn.metrics import adjusted_rand_score
+from sklearn.metrics import adjusted_rand_score, accuracy_score
 sns.set()
 
 
@@ -452,6 +453,7 @@ class hierarchical_model:
                                     init_dic = {'raw_mu':mu_found_r, 'theta':theta_found, 'raw_sigma':sigma_found_r, 'R':R_found, 'W':W_found, 'z':z_found}
 #                                     n_subs, subs = est_k(x[levelcats==cl], k_max = n_subs2, k_min=n_subs2, gmm = gmm, refs = est_ref, weights=clus_probs)    
                                     n_subs = n_subs2
+                                    n_subc_clus.append(n_subs)
                                     moppcas_dat = {'N': N, 'M': M, 'K': n_subs2, 'D':D, 'y':x, 'weights':clus_probs, 'mean_mu':mu_found, 'std_mu':mu_std_found, 'mean_sigma':sigma_found, 'std_sigma':sigma_std_found, 'lim_sigma_up':1.25*sigma_max_found, 'lim_sigma_low':0.75*sigma_min_found,  'lim_mu_up':mu_max_found,'lim_mu_low':mu_min_found, 'found_theta':theta_found, 'found_R':R_found}
                                     break
                                     
@@ -529,7 +531,7 @@ class hierarchical_model:
                 
                 probs_round = np.hstack((probs_round, new_probs))
             
-            cats = np.argmax(probs_round,axis=0)
+            cats = np.argmax(probs_round,axis=1)
             if np.any(np.array(n_subc_clus)>1):
                 more_depth = True
             
@@ -558,15 +560,18 @@ class hierarchical_model:
                 ax.set_title('Clusters after level '+str(lvl+1))
                 plt.show()
 
+                
+            self.probs.append(probs_round.copy())
+            next_clus = np.shape(probs_round)[1]
+            self.cats_per_lvl.append(cats.copy())
+            self.latent.append(lvl_latents.copy())
+            
             # Stop if all clusters are fully analyzed
             if more_depth == False:
                 print('All clusters are fully analyzed!')
                 return self.latent, self.cats_per_lvl, self.probs
             
-            self.probs.append(probs_round.copy())
-            next_clus = np.shape(probs_round)[1]
-            self.cats_per_lvl.append(cats.copy())
-            self.latent.append(lvl_latents.copy())
+            
             
         print('Maximum depth has been reached!')
         return self.latent, self.cats_per_lvl, self.probs
@@ -669,12 +674,12 @@ class hierarchical_model:
                 for clus in range(nclus):
                     ax = fig.add_subplot(int(nclus/6)+1,min(nclus,6),clus+1)
                     mask = self.probs[lvl][:,clus]>vis_threshold
-                    rgba_cols = np.zeros((N,4))
+                    rgba_cols = np.zeros((self.N,4))
                     for k_i in set(self.cats_per_lvl[lvl_i][np.argmax(self.probs[lvl],axis=1)==clus]):
                         rgba_cols[self.cats_per_lvl[lvl_i]==k_i,:3] = self.colors[k_i]
                         rgba_cols[self.cats_per_lvl[lvl_i]==k_i,3] = self.probs[lvl][self.cats_per_lvl[lvl_i]==k_i,clus]
                         if lvl<len(self.latent)-1:
-                            cc_x, cc_y = np.average(self.latent[lvl], axis=1, weights = self.probs[lvl_i][:,k_i])
+                            cc_x, cc_y = np.average(self.latent[lvl], axis=0, weights = self.probs[lvl_i][:,k_i])
                             plt.scatter(cc_x, cc_y, s = 500, c = 'black', zorder=9)
                             plt.text(cc_x, cc_y, str(k_i+1),fontweight= 'bold', size=14, c = 'white', zorder=10,horizontalalignment='center',
                 verticalalignment='center')
@@ -696,7 +701,7 @@ class hierarchical_model:
 
                     ax = fig.add_subplot(int(nclus/6)+1,min(nclus,6),clus+1)
                     mask = self.probs[lvl][:,clus]>vis_threshold
-                    rgba_cols = np.ones((N,4))
+                    rgba_cols = np.ones((self.N,4))
 
                     for k_i in range(len(set(preds))):
                         rgba_cols[preds==k_i,:3] = self.colors[c_i]
@@ -708,12 +713,12 @@ class hierarchical_model:
 
             if plot_real:
                 fig = plt.figure(figsize=(min(nclus*4, 24),5*(int(nclus/6)+1)))
-                for clus in range(n_clus):
+                for clus in range(nclus):
                     ax = fig.add_subplot(int(nclus/6)+1,min(nclus,6),clus+1)
                     mask = self.probs[lvl][:,clus]>0.1
-                    rgba_cols = np.ones((N,4))
+                    rgba_cols = np.ones((self.N,4))
                     for k_i in range(len(set(ind))):
-                        rgba_cols[ind==k_i,:] = self.colors[k_i]
+                        rgba_cols[ind==k_i,:3] = self.colors[k_i]
                     ax.scatter(self.latent[lvl][mask,0],self.latent[lvl][mask,1], c=rgba_cols[mask,:])
                 plt.suptitle('Real clusters')
                 plt.show()
@@ -723,7 +728,7 @@ class hierarchical_model:
                 c_i = 0
                 w_ARI = 0
                 w_ACC = 0
-                for clus in range(n_clus):
+                for clus in range(nclus):
 
                     classifier = sklearn.linear_model.SGDClassifier(loss='log')
                     classifier.fit(self.latent[lvl], ind, sample_weight=self.probs[lvl][:,clus])
@@ -731,18 +736,18 @@ class hierarchical_model:
 
                     ax = fig.add_subplot(int(nclus/6)+1,min(nclus,6),clus+1)
                     mask = self.probs[lvl][:,clus]>0.1
-                    rgba_cols = np.zeros((N,4))
+                    rgba_cols = np.zeros((self.N,4))
 
                     for k_i in set(preds):
-                        rgba_cols[preds==k_i,:] = cols[int(k_i)]
+                        rgba_cols[preds==k_i,:3] = self.colors[int(k_i)]
                         c_i+=1
-                    rgba_cols[:,3] = np.ones(N)
+                    rgba_cols[:,3] = np.ones(self.N)
                     ax.scatter(model.latent[lvl][mask,0],self.latent[lvl][mask,1], c=rgba_cols[mask,:])
                     ari = adjusted_rand_score(preds[mask], ind[mask])
                     acc = accuracy_score(preds, ind, sample_weight = self.probs[lvl][:,clus])
                     ax.set_title('Cluster %i - ARI: %.3f, ACC: %.3f'%(clus+1,ari,acc))
-                    w_ARI+= ari*(sum(mask))/N
-                    w_ACC+= acc*(sum(mask))/N
+                    w_ARI+= ari*(sum(mask))/self.N
+                    w_ACC+= acc*(sum(mask))/self.N
                 plt.suptitle('log.reg. - w. ARI: %.3f, w. ACC: %.3f'%(w_ARI, w_ACC))
                 plt.show()
             
