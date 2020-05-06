@@ -14,7 +14,9 @@ import pandas as pd
 from scipy.special import logsumexp
 from sklearn.cluster import SpectralClustering
 from scipy.stats import norm,multivariate_normal
+from sklearn.mixture import GaussianMixture
 from sklearn.metrics import adjusted_rand_score, accuracy_score
+import warnings
 sns.set()
 
 
@@ -85,7 +87,7 @@ def GAP(points, k_max=2, nref=10):
 
     return list(range(1,k_max+1))[np.argmax(gap)], kmeans_list[np.argmax(gap)], gap
 
-def est_k(points,k_min = 1, k_max = 2, refs = 3, retry=2, method='bic', verbose = False, gmm=False, weights=None):
+def est_k(points,k_min = 1, k_max = 2, refs = 3, retry=2, method='bic', verbose = False, weights=None, clustering='gmm'):
     
     quit = False
     clus = []
@@ -109,47 +111,53 @@ def est_k(points,k_min = 1, k_max = 2, refs = 3, retry=2, method='bic', verbose 
         for ref in range(n_ref):
             if verbose:
                 print('%i clusters, model %i of %i'%(k,ref+1,n_ref))
-            model = KMeans(k).fit(points)
+            model_data = {}
+            
+            if clustering=='spectral':
+                model = SpectralClustering(n_clusters=k, affinity='nearest_neighbors',assign_labels='kmeans')
+                spec_labels = model.fit_predict(points)
+                a, b = kmeans_AIC(points,spec_labels, k, verbose=verbose)
+                model_data = get_parameters(points, spec_labels)
+                
+            elif clustering=='kmeans':
+                model = KMeans(k).fit(points)
+                a, b = kmeans_AIC(points,model.labels_, k, verbose=verbose)
+                model_data = get_parameters(points, spec_labels)
+            
+            elif clustering=='gmm':
+                model = GaussianMixture(k)
+                labels = model.fit_predict(points)
+#                 a, b = kmeans_AIC(points,labels, k, verbose=verbose)
+                a = model.aic(points)
+                b = model.bic(points)
+                model_data = get_parameters(points, labels)
+#             if gmm:
+#                 count = 0 
+#                 while True:
+#                     if verbose:
+#                         print('Building GMM model with %i clusters'%k)
+#                     gmm_dat = {'N': N,'K': k, 'D':D, 'y':points, 'weights':weights}
+#                     fit = gmm_diag_weighted.sampling(data=gmm_dat, chains=1, iter=150, init=[{'mu':model_data['mu'], 'theta':model_data['theta']}])
+#                     if verbose:
+#                         print('Model built!')
+#                     fit_ext = fit.extract()
+#                     z_sim = np.mean(fit_ext['z'],axis=0)
+#                     labels = np.argmax(z_sim, axis=1)
+#                     if np.all(np.array([sum(labels==k_i) for k_i in range(k)])>1):
+#                         a, b =kmeans_AIC(points,labels, k, verbose=verbose)
+#                         model_data['mu'] = np.mean(fit_ext['mu'],axis=0)
+#                         model_data['theta'] = np.mean(fit_ext['theta'],axis=0)
+#                         model_data['labels'] = labels
+#                         break
+#                     count+=1
+#                     print('Failed to find model with right number of clusters (trial %i of %i)'%(count,retry))
+#                     if count>=retry:
+#                         print('No model with ', k, ' clusters found, showing cluster estimates with k_max at ',k-1)
+#                         quit = True
+#                         break
             if verbose:
                 print('Model built!')
-            model_data = {}
-            theta = [np.sum(model.labels_==k_i)/N for k_i in range(k)]
-            if gmm:
-                count = 0 
-                while True:
-                    if verbose:
-                        print('Building GMM model with %i clusters'%k)
-                    gmm_dat = {'N': N,'K': k, 'D':D, 'y':points, 'weights':weights}
-                    fit = gmm_diag_weighted.sampling(data=gmm_dat, chains=1, iter=150, init=[{'mu':model.cluster_centers_, 'theta':theta}])
-                    if verbose:
-                        print('Model built!')
-                    fit_ext = fit.extract()
-                    z_sim = np.mean(fit_ext['z'],axis=0)
-                    labels = np.argmax(z_sim, axis=1)
-                    if np.all(np.array([sum(labels==k_i) for k_i in range(k)])>1):
-                        a, b =kmeans_AIC(points,labels, k, verbose=verbose)
-                        model_data['mu'] = np.mean(fit_ext['mu'],axis=0)
-                        model_data['theta'] = np.mean(fit_ext['theta'],axis=0)
-                        model_data['labels'] = labels
-                        break
-                    count+=1
-                    print('Failed to find model with right number of clusters (trial %i of %i)'%(count,retry))
-                    if count>=retry:
-                        print('No model with ', k, ' clusters found, showing cluster estimates with k_max at ',k-1)
-                        quit = True
-                        break
-            else:
-                a, b =kmeans_AIC(points,model.labels_, k, verbose=verbose)
-                model_data['mu'] = model.cluster_centers_
-                model_data['theta'] = theta
-                model_data['labels'] = model.labels_
-                model_data['min_mus'] = [np.min(points[model.labels_==k_i],axis=0) for k_i in range(k)]
-                model_data['std_mus'] = [np.std(points[model.labels_==k_i],axis=0)+0.0001 for k_i in range(k)]
-                model_data['max_mus'] = [np.max(points[model.labels_==k_i],axis=0) for k_i in range(k)]
-                model_data['max_sigmas'] = [np.max(np.std(points[model.labels_==k_i],axis=0)) for k_i in range(k)]
-                model_data['min_sigmas'] = [np.min(np.std(points[model.labels_==k_i],axis=0))+0.0001 for k_i in range(k)]
-                model_data['mean_sigmas'] = [np.mean(np.std(points[model.labels_==k_i],axis=0))+0.0001 for k_i in range(k)]
-                model_data['std_sigmas'] = [np.std(np.std(points[model.labels_==k_i],axis=0))+0.0001 for k_i in range(k)]
+                
             
             
             if quit == False:
@@ -160,16 +168,17 @@ def est_k(points,k_min = 1, k_max = 2, refs = 3, retry=2, method='bic', verbose 
     if clus[np.argmin(aics)]!=clus[np.argmin(bics)]:
         print(clus[np.argmin(aics)], ' clusters according to AIC, ', clus[np.argmin(bics)], ' clusters according to BIC.')
     if method=='aic':
-        return clus[np.argmin(aics)], mods[np.argmin(aics)]
+        return clus[np.argmin(aics)], mods[np.argmin(aics)]['labels']
     elif method=='bic':
-        return clus[np.argmin(bics)], mods[np.argmin(bics)]
+        return clus[np.argmin(bics)], mods[np.argmin(bics)]['labels']
     elif method=='both':
-        return clus[np.argmin(aics)], mods[np.argmin(aics)],clus[np.argmin(bics)], mods[np.argmin(bics)]
+        return clus[np.argmin(aics)], mods[np.argmin(aics)]['labels'],clus[np.argmin(bics)], mods[np.argmin(bics)]['labels']
     else:
         print("Choose 'aic' or 'bic' as method!")
         return 1
     
 def kmeans_AIC(points, labels, K, verbose = False):
+#     warnings.filterwarnings('error')
     if verbose:
         print('Evaluating %i clusters'%K)
     N,D = np.shape(points)
@@ -177,19 +186,43 @@ def kmeans_AIC(points, labels, K, verbose = False):
     theta = [np.sum(labels==k)/K for k in range(K)]
     mu = [np.mean(points[labels==k],axis=0) for k in range(K)]
     sigmas = [np.std(points[labels==k],axis=0) for k in range(K)]
+    sigmas = np.max([sigmas, 0.00000001*np.ones_like(sigmas)],axis=0)
 
     for k in range(K):
-        probs[:,k] = multivariate_normal.logpdf(points, mean=mu[k], cov=np.diag(sigmas[k]), allow_singular=True) 
-        
-    probs+=np.log(theta)
-    llh = np.sum(logsumexp(probs,axis=1))
+        probs[:,k] = np.nansum(norm.logpdf(points, loc=mu[k], scale=sigmas[k]),axis=1)
 
+    probs+=np.log(theta)
+    try:
+        llh = np.sum(logsumexp(probs,axis=1))
+    except:
+        for n in range(N):
+            try:
+                logsumexp(probs[n,:])
+            except:
+                print(probs[n,:])
     aic = -2*llh + 2*K*D
     bic = -2*llh + np.log(N)*K*D
     if verbose:
         print('Evaluation complete: n_clusters: ',K, ', AIC: ',aic, ', BIC: ',bic)
         print()
     return aic, bic
+
+def get_parameters(points, labels):
+    N, D = np.shape(points)
+    K = set(labels)
+    model_data = {}
+    model_data['mu'] = [np.mean(points[labels==k_i],axis=0) for k_i in K]
+    theta = [np.sum(labels==k_i)/N for k_i in K]
+    model_data['theta'] = theta
+    model_data['labels'] = labels
+    model_data['min_mus'] = [np.min(points[labels==k_i],axis=0) for k_i in K]
+    model_data['std_mus'] = [np.std(points[labels==k_i],axis=0)+0.0001 for k_i in K]
+    model_data['max_mus'] = [np.max(points[labels==k_i],axis=0) for k_i in K]
+    model_data['max_sigmas'] = [np.max(np.std(points[labels==k_i],axis=0)) for k_i in K]
+    model_data['min_sigmas'] = [np.min(np.std(points[labels==k_i],axis=0))+0.0001 for k_i in K]
+    model_data['mean_sigmas'] = [np.mean(np.std(points[labels==k_i],axis=0))+0.0001 for k_i in K]
+    model_data['std_sigmas'] = [np.std(np.std(points[labels==k_i],axis=0))+0.0001 for k_i in K]
+    return model_data
 
 
 class hierarchical_model:
@@ -200,7 +233,7 @@ class hierarchical_model:
         self.mus = [[]]
         self.cats_per_lvl = []
     
-    def fit(self,x, M=2, max_depth=5, k_max =3, plotting=True, min_clus_size=10, vis_threshold=0.05, gmm = False, its=300, samplingmethod='VB', n_try=3):
+    def fit(self,x, M=2, max_depth=5, k_max =3, plotting=True, min_clus_size=10, vis_threshold=0.05, its=300, samplingmethod='VB', n_try=3, n_cluster='latent', plot_kmeans=True, init_cluster='gmm'):
         
         if k_max <3:
             print("It is suggested to give 'k_max' a value of at least 3.")
@@ -219,10 +252,12 @@ class hierarchical_model:
         self.probs = [np.ones((N,1))]
         self.colors = [np.random.uniform(size=3) for k in range(k_max**max_depth)]
         
-        if gmm:
-            est_ref = 1
-        else:
-            est_ref = 5
+#         if gmm:
+#             est_ref = 1
+#         else:
+        est_ref = 5
+    
+        dead_end = []
 
         # top-level latent data
         print('Latent data on top level:')
@@ -243,7 +278,14 @@ class hierarchical_model:
             return 1
 
         # top-level cluster determination
-        K_1, clusters_1 = est_k(x, k_max = k_max, gmm = gmm, refs = est_ref)
+        if n_cluster=='full_data':
+            K_1, labels_1 = est_k(x, k_max = k_max, k_min = 2, refs = est_ref, clustering=init_cluster)
+#             clusters_1 = get_parameters(x, labels_1)
+        elif n_cluster=='latent':
+            K_1, labels_1 = est_k(latent_top, k_max = k_max, k_min = 2, refs = est_ref, clustering=init_cluster)
+#             clusters_1 = get_parameters(latent_top, labels_1)
+        clusters_1 = get_parameters(x, labels_1)
+        
         self.mus[-1].append(clusters_1['mu'])
         print('Estimated number of clusters on top-level data: %i (out of a maximum of) %i'%(K_1, k_max))
         
@@ -259,14 +301,17 @@ class hierarchical_model:
                             best = i
                 chosen.append(best)
             self.dimx,self.dimy,self.dimz = chosen
+            self.dim_mask = np.array([i in chosen for i in range(self.M)])
         
         # plot top-level latent data with coloured first clusters
         if plotting:
             fig = plt.figure(figsize=(6,6))
             rgba_colors = np.ones((N,4))
-#             for k_i in range(K_1):
-#                 rgba_colors[clusters_1['labels']==k_i,:3] = self.colors[k_i]
-            rgba_colors[:,:3] = self.colors[0]
+            if plot_kmeans:
+                for k_i in range(K_1):
+                    rgba_colors[clusters_1['labels']==k_i,:3] = self.colors[k_i]
+            else:
+                rgba_colors[:,:3] = self.colors[0]
             if M==2:
                 ax = fig.add_subplot(111)
                 ax.scatter(latent_top[:,0],latent_top[:,1], c = rgba_colors, zorder=1)
@@ -279,10 +324,13 @@ class hierarchical_model:
 #                     ax.scatter(cc_x, cc_y, c='black', s=500, zorder=10)
 #                     ax.text(cc_x, cc_y, str(k_i+1),fontweight= 'bold', size=14, c = 'white', zorder=100,horizontalalignment='center',verticalalignment='center')
 #                 elif M>2:
-#                     cc_x, cc_y, cc_Z = np.mean(latent_top[clusters_1['labels']==k_i],axis=0)
+#                     cc_x, cc_y, cc_Z = np.mean(latent_top[clusters_1['labels']==k_i],axis=0)[self.dim_mask]
 #                     ax.scatter(cc_x, cc_y, cc_z, c='black', s=500, zorder=10)
 #                     ax.text(cc_x, cc_y, cc_z, str(k_i+1),fontweight= 'bold', size=14, c = 'white', zorder=100,horizontalalignment='center',verticalalignment='center')
-            ax.set_title('Top-level latent data')
+            if plot_kmeans:
+                ax.set_title('Top-level latent data\n(initial clustering by %s)'%init_cluster)
+            else:
+                ax.set_title('Top-level latent data')
             plt.show()
 
             
@@ -297,6 +345,7 @@ class hierarchical_model:
         for lvl in range(max_depth):
             # repeat cluster detemination and MoPPCAs until max_depth is reached or until all clusters fully analyzed
             more_depth = False
+            dead_end.append([])
             print('level %i:'%(lvl+1))
             lvl_probs = self.probs[-1].copy()
             n_clus = np.shape(lvl_probs)[1]
@@ -306,34 +355,64 @@ class hierarchical_model:
             lvl_latents  = np.zeros((N,2))
             probs_round = np.zeros((N,0))
             
-            
+            i_c = 1
             # analyze all subclusters as found in the last level
             for cl in range(n_clus):
+                
                 print('Cluster %i:'%(cl+1))
                 clus_probs = lvl_probs[:,cl]
+                
+                # Dont retry the dead ends
+                if dead_end[-2][cl]:
+                    n_subs = 1
+                else:
+                    # Dont divide clusters further if they are too small
+                    if sum(levelcats==cl)>k_max:
+                        if lvl==0:
+                            k_min = 2
+                        else:
+                            k_min = 1
+                        if n_cluster=='full_data':
+                            n_subs, labels = est_k(x[levelcats==cl], k_max = k_max, k_min = k_min, refs = est_ref, weights=clus_probs, clustering=init_cluster)
+                        elif n_cluster=='latent':
+                            n_subs, labels = est_k(self.latent[-1][levelcats==cl], k_max = k_max, k_min = k_min, refs = est_ref, weights=clus_probs, clustering=init_cluster)
+                        subs = get_parameters(x[levelcats==cl], labels)
+                        while np.any([sum(subs['labels']==k_i)<min_clus_size for k_i in range(n_subs)]):
+                            if n_subs <= 2:
+                                n_subs = 1
+                                break
+                            if n_cluster=='full_data':
+                                n_subs, subs = est_k(x[levelcats==cl], k_max = n_subs-1, refs = est_ref, weights=clus_probs, clustering=init_cluster)
+                            elif n_cluster=='latent':
+                                n_subs, subs = est_k(self.latent[-1][levelcats==cl], k_max = n_subs-1, refs = est_ref, weights=clus_probs, clustering=init_cluster)
+                            subs = get_parameters(x[levelcats==cl], labels)
+
+                    else:
+                        n_subs = 1
+
                 if plotting and lvl>0:
                     rgba_colors = 0.2*np.ones((N,4))    
                     plt.scatter(latent_top[:,0], latent_top[:,1], c=rgba_colors)
 #                     rgba_colors = np.zeros((N,4))
-                    rgba_colors[:,:3] = self.colors[cl]
+                    if plot_kmeans:
+                        for k_i in range(n_subs):
+                            rgba_tmp = np.ones((sum(levelcats==cl),3))
+                            rgba_tmp[subs['labels']==k_i,:] = self.colors[k_i]
+                        rgba_colors[levelcats==cl,:3] = rgba_tmp
+                    else:
+                        rgba_colors[:,:3] = self.colors[cl]
                     rgba_colors[:,3] = clus_probs
                     plt.scatter(latent_top[:,0], latent_top[:,1], c=rgba_colors)
-                    plt.title('Analysing cluster %i'%(cl+1))
+                    if plot_kmeans:
+                        plt.title('Analysing cluster %i\n(initial clustering by %s)'%(cl+1, init_cluster))
+                    else:
+                        plt.title('Analysing cluster %i'%(cl+1))
                     plt.show()
                 n_subc_clus = []
                 
                 
                 
-                # Dont divide clusters further if they are too small
-                if sum(levelcats==cl)>k_max:
-                    n_subs, subs = est_k(x[levelcats==cl], k_max = k_max, gmm = gmm, refs = est_ref, weights=clus_probs)
-                    while np.any([sum(subs['labels']==k_i)<min_clus_size for k_i in range(n_subs)]):
-                        if n_subs <= 2:
-                            n_subs = 1
-                            break
-                        n_subs, subs = est_k(x[levelcats==cl], k_max = n_subs-1, gmm = gmm, refs = est_ref, weights=clus_probs)
-                else:
-                    n_subs = 1
+                
 
                 if n_subs == 1:
                     # If cluster doesnt contain more subclusters, just copy it over to the next level
@@ -342,6 +421,7 @@ class hierarchical_model:
                     new_probs = clus_probs[np.newaxis].T
                     lvl_latents += clus_latent*clus_probs[np.newaxis].T
                     mask = clus_probs>vis_threshold
+                    dead_end[-1].append(n_subs==1)
                     
                     # And plot if chosen so
                     if plotting:
@@ -352,9 +432,15 @@ class hierarchical_model:
                         if M==2:
                             ax = fig.add_subplot(111)
                             ax.scatter(clus_latent[mask,0], clus_latent[mask,1], c=rgba_colors[mask,:], zorder=0)
+                            cc_x, cc_y = np.average(clus_latent, weights=clus_probs, axis=0)
+                            ax.scatter(cc_x, cc_y, c='black', s=500, zorder=10)
+                            ax.text(cc_x, cc_y, str(i_c),fontweight= 'bold', size=14, c = 'white', 
                         if M>2:
                             ax = fig.add_subplot(111, projection='3d')
                             ax.scatter(clus_latent[mask,self.dimx], clus_latent[mask,self.dimy], clus_latent[mask,self.dimz], c=rgba_colors[mask,:], zorder=0)
+                            cc_x, cc_y, cc_z = np.average(clus_latent, weights=clus_probs, axis=0)[self.dim_mask]
+                            ax.scatter(cc_x, cc_y, cc_z, c='black', s=500, zorder=10)
+                            ax.text(cc_x, cc_y, cc_z, str(i_c),fontweight= 'bold', size=14, c = 'white', 
                         ax.set_title('Latent data of subcluster '+str(cl+1)+' (copied over from higher level)')
                         plt.show()
                     count+=1
@@ -423,6 +509,7 @@ class hierarchical_model:
                                 if n_subs2==1:
                                     print('MoPPCAS was looking for %i clusters, but no more subclusters were found.'%n_subs)
                                     rawprobs = np.ones((N,1))
+                                    dfz = dfmean[dfmean.index.str.startswith('z.')]
                                     newfound_latent = np.reshape(np.array(dfz),(M,N)).T
                                     n_subs = 1
                                     n_subc_clus.append(n_subs)
@@ -458,6 +545,8 @@ class hierarchical_model:
                                     break
                                     
                             print('Accepted MoPPCAs fit with %i clusters.'%n_subs)
+                            for s in range(n_subs):
+                                dead_end[-1].append(n_subs==1)
 
 
                     elif samplingmethod == 'NUTS':
@@ -494,14 +583,14 @@ class hierarchical_model:
                                 ax.scatter(self.latent[-1][new_probs[:,k_i]>vis_threshold,0],self.latent[-1][new_probs[:,k_i]>vis_threshold,1], c=rgba_colors[new_probs[:,k_i]>vis_threshold,:], zorder=1)
                                 cc_x, cc_y = np.average(self.latent[-1], weights=new_probs[:,k_i], axis=0)
                                 ax.scatter(cc_x, cc_y, c='black', s=500, zorder=10)
-                                ax.text(cc_x, cc_y, str(k_i+1),fontweight= 'bold', size=14, c = 'white', zorder=100,horizontalalignment='center',verticalalignment='center')
+                                ax.text(cc_x, cc_y, str(k_i+i_c),fontweight= 'bold', size=14, c = 'white', zorder=100,horizontalalignment='center',verticalalignment='center')
                             if M>2:
                                 ax.scatter(self.latent[-1][new_probs[:,k_i]>vis_threshold,self.dimx],self.latent[-1][new_probs[:,k_i]>vis_threshold,self.dimy], self.latent[-1][new_probs[:,k_i]>vis_threshold,self.dimz], c=rgba_colors[mask,:],  zorder=1)
-                                cc_x, cc_y, cc_z = np.average(self.latent[-1], weights=new_probs[:,k_i], axis=0)
-                                ax.scatter(cc_x, cc_y, cc_z, c='black', s=500, zorder=1)
-                                ax.text(cc_x, cc_y, cc_z, str(k_i+1),fontweight= 'bold', size=14, c = 'white', zorder=100,horizontalalignment='center',verticalalignment='center')
+                                cc_x, cc_y, cc_z = np.average(self.latent[-1], weights=new_probs[:,k_i], axis=0)[self.dim_mask]
                                 
-
+                                ax.scatter(cc_x, cc_y, cc_z, c='black', s=500, zorder=1)
+                                ax.text(cc_x, cc_y, cc_z, str(k_i+i_c),fontweight= 'bold', size=14, c = 'white', zorder=100,horizontalalignment='center',verticalalignment='center')
+                                
                         ax.set_title('Latent data of cluster %i with found clusters'%(cl+1))
                         plt.show()
                         
@@ -524,7 +613,8 @@ class hierarchical_model:
                             if M>2:
                                 ax = fig.add_subplot(n_row, n_col, no_plotje, projection='3d')
                                 ax.scatter(newfound_latent[mask,self.dimx],newfound_latent[mask,self.dimy], newfound_latent[mask,self.dimz], c=rgba_colors[mask,:], zorder=0)
-                            ax.set_title('Subcluster '+str(subc+1))
+                            ax.set_title('Subcluster '+str(i_c))
+                            i_c+=1
                             no_plotje+=1
                         plt.suptitle('Latent data of subclusters')
                         plt.show()
@@ -554,7 +644,7 @@ class hierarchical_model:
                         ax.text(cc_x, cc_y, str(c+1),fontweight= 'bold', size=14, c = 'white', zorder=10,horizontalalignment='center',verticalalignment='center')
                     if M>2:
                         ax.scatter(latent_top[mask,self.dimx],latent_top[mask,self.dimy],latent_top[mask,self.dimz], c = rgba_colors[mask,:], zorder=0)
-                        cc_x, cc_y, cc_z = np.average(latent_top, weights=probs_round[:,c], axis=0)
+                        cc_x, cc_y, cc_z = np.average(latent_top, weights=probs_round[:,c], axis=0)self.dim_mask
                         ax.scatter(cc_x, cc_y, cc_z, c='black', s=500, zorder=1)
                         ax.text(cc_x, cc_y, cc_z, str(c+1),fontweight= 'bold', size=14, c = 'white', zorder=10,horizontalalignment='center',verticalalignment='center')
                 ax.set_title('Clusters after level '+str(lvl+1))
@@ -742,7 +832,7 @@ class hierarchical_model:
                         rgba_cols[preds==k_i,:3] = self.colors[int(k_i)]
                         c_i+=1
                     rgba_cols[:,3] = np.ones(self.N)
-                    ax.scatter(model.latent[lvl][mask,0],self.latent[lvl][mask,1], c=rgba_cols[mask,:])
+                    ax.scatter(self.latent[lvl][mask,0],self.latent[lvl][mask,1], c=rgba_cols[mask,:])
                     ari = adjusted_rand_score(preds[mask], ind[mask])
                     acc = accuracy_score(preds, ind, sample_weight = self.probs[lvl][:,clus])
                     ax.set_title('Cluster %i - ARI: %.3f, ACC: %.3f'%(clus+1,ari,acc))
