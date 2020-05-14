@@ -2,6 +2,24 @@
 These are just some quick notes on what to do for the coming time for 
 myself.
 
+### 07-05
+- code opruimen
+	- celltypes in figuurtjes
+- besluiten wat in verslag
+	- data
+	- experimenten
+	- layout verslag
+- vergelijken NUTS en VB
+- uitzoeken:
+	- derde persoon
+	- presentatie
+	- eisen lengte verslag
+- misschien derde dataset
+
+### 30-04
+- replace boundaries with priors
+- give sigma inverse gamma distribution as prior
+
 ### 23-04
 - reparametrization pystan for underflow
 - vectorization pystan

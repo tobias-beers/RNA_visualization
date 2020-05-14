@@ -1,0 +1,31 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Unknown </title></head><body>
+<h3 id="advi-automatic-differentiation-variational-inference-works-through-these-steps">ADVI (automatic differentiation variational inference) works through these steps:</h3>
+<ul>
+<li>The user inputs a model written in Stan</li>
+<li>ADVI transforms the support of the function to include only real-valued variables</li>
+<li>ADVI then minimizes KL(q(theta)||p(theta|x))</li>
+<li>ADVI recasts the gradient of the KL as an expectation over q</li>
+<li>ADVI reparameterizes the gradient in terms of a Gaussian by a transformation</li>
+<li>
+<p>ADVI uses noisy gradients to optimize variational distribution</p>
+</li>
+<li>
+<p>minimize KL = maximize ELBO</p>
+</li>
+<li>transform by using Weibull and Poisson distribution</li>
+<li>maximize elbo by stochastic gradient ascent<ul>
+<li>automatic differentiation to compute gradient</li>
+<li>MC integration to approximate expectations</li>
+</ul>
+</li>
+<li>elliptical standardization to make expectation known</li>
+</ul>
+<h3 id="variational-bayes">Variational Bayes</h3>
+<ul>
+<li>tries to approximate the values of latent variables and parameters $Z$ given dataset $X$.</li>
+<li>approximates the posterior distribution of these parameters as $P(Q)$</li>
+<li>$P(Q) \approx P(Z|X)$, but $P(Q)$ will have a simpler form.</li>
+<li>Similarity between $P(Z|X)$ and $P(Q)$ si measured by Kullback-Leibler divergence of P from Q</li>
+<li>$KL(Q||P)$ can also be written as $KL(Q||P) = evidence - ELBO$, therefore, maximizing the ELBO minimizes the KL-divergence (the evidence is constant).</li>
+</ul>
+</body></html>

@@ -1,7 +1,39 @@
-## Done for thursday (30-4)
+## Done for thursday (14-05)
+
+- Looked up administrative information about thesis:
+	- 1 examiner required, and found
+	- 1 second assessor required (not yet found maybe)
+		- one mail claims they should be a permanent staff member of FNWI
+		- another mail sais FNWI not necessary
+		- student.uva.nl/cls sais daily supervisor may be second assessor
+		- but the page about 'defending your graduation reasearch' explains that when the examiner, daily supervisor and second assessor are two people in total, a third technical expert must be added
+		- another page claimed minimum of two members is okay
+		- I mailed the master support about this.
+	- thesis must be mailed to everyone 2 weeks before presenting
+	- presentation is 25 minutes, followed by 30 minutes of questions, followed by 10-15 minutes of grade assessment
+	- if end result > 8.0: examiner has to write motivation explaning grade
+- Made model ready to work with NUTS
+- Completed plots to include cellnames in legend
+- For experiment: compare model NUTS, model VB and some (3?) other models from literature
+- made sketch for outline thesis, but still waiting for guidelines on pagecount
+- compared speed and accuracy of NUTS and VB for several numbers of genes	
+
+## Done for thursday (07-04)
+
+- Tried to implement priors, gave sigma an inverse gamma prior and removed boundaries. This affected the results negatively and eventually caused the algorithm to become unfunctional, so all files were reset to last checkpoint on git.
+- Completely changed model:
+	- Inital clustering on latent data instead of full data, works better
+	- Initial clustering using a gmm from scipy, works better
+	- Modified graphic output of algorithm
+	- Quite a lot of miscellaneous chances to algorithm. I dont know what, I forgot. But a lot.
+	- Ran algorithm on all datasets producing first results. Looks good.
+- Wrote a small start on ADVI and variational Bayesian techniques.
+
+## Done for thursday (30-5)
 
 - Tried to vectorize computation of R matrix in Moppcas2.stan, turns out 'normal_lpdf' only takes vectors as input and not matrices, so vectorization is not possible.
-
+- Added lower bound sigma
+- Added priors
 
 
 ## Done for thursday (23-4)
