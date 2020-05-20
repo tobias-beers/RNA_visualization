@@ -2,6 +2,12 @@
 These are just some quick notes on what to do for the coming time for 
 myself.
 
+### 14-05
+- splatter datasets minder dimensies apart genereren
+- tijd afhankelijk van aantal mixture components?
+- kruisvalidatie
+
+
 ### 07-05
 - code opruimen
 	- celltypes in figuurtjes

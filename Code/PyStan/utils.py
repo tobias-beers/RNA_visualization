@@ -225,7 +225,48 @@ def get_parameters(points, labels):
     model_data['std_sigmas'] = [np.std(np.std(points[labels==k_i],axis=0))+0.0001 for k_i in K]
     return model_data
 
-
+def logres_scores(points, labels, weights, K=5):
+    
+    N,D = np.shape(points)
+    folded_index = np.zeros(N)
+    
+    w_sort = np.argsort(-weights)
+    
+    for i in range(N):
+        if i%K==0:
+            order = np.random.permutation(range(K))
+        folded_index[w_sort[i]] = order[i%K]
+        
+    w_acc = 0
+    w_ari = 0
+#     preds_final = np.zeros(N)
+    preds_all = np.zeros((N,len(set(labels))))
+    
+    for k in range(K):
+        classifier = sklearn.linear_model.SGDClassifier(loss='log')
+        classifier.fit(points[folded_index!=k,:], labels[folded_index!=k], sample_weight=weights[folded_index!=k])
+        preds = classifier.predict(points[folded_index==k])
+        ari = adjusted_rand_score(preds, labels[folded_index==k])
+        w_ari += ari
+        acc = accuracy_score(preds, labels[folded_index==k], sample_weight = weights[folded_index==k])
+        w_acc += acc
+        preds_tmp = np.zeros((sum(folded_index==k),len(set(labels))))
+        for k_i in set(preds):
+            preds_tmp[preds==k_i,k_i] += np.sum(weights[folded_index!=k])
+        preds_all[folded_index==k,:] += preds_tmp
+    
+    preds_final = np.argmax(preds_all, axis=1)
+    
+#         preds_final[folded_index==k] += preds*np.sum(weights[folded_index!=k])
+#     preds_final = np.round(preds_final/sum(weights))
+    w_ari = w_ari/K
+    w_acc = w_acc/K
+    
+#     w_ari = adjusted_rand_score(preds_final, labels)
+#     w_acc = accuracy_score(preds_final, labels, sample_weight = weights)
+    
+    return preds_final, w_acc, w_ari
+    
 class hierarchical_model:
     
     def __init__(self):
@@ -234,6 +275,8 @@ class hierarchical_model:
         self.mus = [[]]
         self.cats_per_lvl = []
         self.times = []
+        self.knots_tried = []
+        self.knots_found = []
     
     def fit(self,x, M=2, max_depth=5, k_max =3, plotting=True, min_clus_size=10, vis_threshold=0.05, its=300, samplingmethod='VB', n_try=3, n_cluster='latent', plot_kmeans=True, init_cluster='gmm', savefigs=False):
         
@@ -283,6 +326,8 @@ class hierarchical_model:
             return 1
         self.latent.append(latent_top.copy())
         self.times.append(time.time()-starttime)
+        self.knots_tried.append(0)
+        self.knots_found.append(0)
         
         # top-level cluster determination
         if n_cluster=='full_data':
@@ -373,7 +418,9 @@ class hierarchical_model:
                 
                 # Dont retry the dead ends
                 if dead_end[-2][cl] or sum(levelcats==cl)<min_clus_size:
-                    n_subs, labels = est_k(self.latent[-1][levelcats==cl], k_max = 1, k_min = k_min, refs = est_ref, weights=clus_probs, clustering=init_cluster)
+#                     n_subs, labels = est_k(self.latent[-1][levelcats==cl], k_max = 1, k_min = 1, refs = est_ref, weights=clus_probs, clustering=init_cluster)
+                    n_subs = 1
+                    labels = np.zeros(np.shape(self.latent[-1][levelcats==cl])[0])
                     subs = get_parameters(x[levelcats==cl], labels)
                 else:
                     # Dont divide clusters further if they are too small
@@ -505,7 +552,9 @@ class hierarchical_model:
                             
                             moppcas_cats = np.argmax(rawprobs,axis=1)
                             moppcas_cats_set = set(moppcas_cats)
+                            self.knots_tried.append(n_subs)
                             n_subs2 = len(moppcas_cats_set)
+                            self.knots_found.append(n_subs2)
                             print('Found MoPPCAs fit with %i clusters.'%n_subs2)
                             if n_subs2 == n_subs:
                                 tries = n_try
@@ -585,11 +634,11 @@ class hierarchical_model:
                                 mu_min_found = np.array([np.min(x[moppcas_cats==k_i],axis=0) for k_i in moppcas_cats_set])
                                 mu_std_found = np.array([np.std(x[moppcas_cats==k_i],axis=0) for k_i in moppcas_cats_set])
 
-                                init_dic = {'raw_mu':mu_found_r, 'theta':theta_found, 'raw_sigma':sigma_found_r, 'R':R_found, 'W':W_found, 'z':z_found}
+                                init_dic = {'raw_mu':mu_found_r, 'theta':theta_found, 'raw_sigma':sigma_found_r, 'R':rawprobs, 'W':W_found, 'z':z_found}
 #                                     n_subs, subs = est_k(x[levelcats==cl], k_max = n_subs2, k_min=n_subs2, gmm = gmm, refs = est_ref, weights=clus_probs)    
                                 n_subs = n_subs2
                                 n_subc_clus.append(n_subs)
-                                moppcas_dat = {'N': N, 'M': M, 'K': n_subs2, 'D':D, 'y':x, 'weights':clus_probs, 'mean_mu':mu_found, 'std_mu':mu_std_found, 'mean_sigma':sigma_found, 'std_sigma':sigma_std_found, 'lim_sigma_up':1.25*sigma_max_found, 'lim_sigma_low':0.75*sigma_min_found,  'lim_mu_up':mu_max_found,'lim_mu_low':mu_min_found, 'found_theta':theta_found, 'found_R':R_found}
+                                moppcas_dat = {'N': N, 'M': M, 'K': n_subs2, 'D':D, 'y':x, 'weights':clus_probs, 'mean_mu':mu_found, 'std_mu':mu_std_found, 'mean_sigma':sigma_found, 'std_sigma':sigma_std_found, 'lim_sigma_up':1.25*sigma_max_found, 'lim_sigma_low':0.75*sigma_min_found,  'lim_mu_up':mu_max_found,'lim_mu_low':mu_min_found, 'found_theta':theta_found, 'found_R':rawprobs}
                                 break
 
                         print('Accepted MoPPCAs fit with %i clusters.'%n_subs)
@@ -713,10 +762,10 @@ class hierarchical_model:
             # Stop if all clusters are fully analyzed
             if more_depth == False:
                 print('All clusters are fully analyzed!')
-                return self.latent, self.cats_per_lvl, self.probs, self.times
+                return self.latent, self.cats_per_lvl, self.probs, self.times, self.knots_tried, self.knots_found
             
         print('Maximum depth has been reached!')
-        return self.latent, self.cats_per_lvl, self.probs, self.times
+        return self.latent, self.cats_per_lvl, self.probs, self.times, self.knots_tried, self.knots_found
     
     def visualize_tree(self,categories = None, vis_threshold=0.05, labelnames=None, savefigs=False, plotlegend=False):
         # plot the subdivision of clusters in hierarchical order
@@ -901,7 +950,7 @@ class hierarchical_model:
                 for clus in range(nclus):
                     ax = fig.add_subplot(int(nclus/6)+1,min(nclus,6),clus+1)
                     rgba_cols = np.ones((self.N,4))
-                    for k_i in range(len(set(ind))):
+                    for k_i in set(ind):
                         mask = np.array(self.probs[lvl][:,clus]>0.1)*np.array(ind==k_i)
                         rgba_cols[ind==k_i,:3] = self.colors[k_i]
                         ax.scatter(self.latent[lvl][mask,0],self.latent[lvl][mask,1], c=rgba_cols[mask,:], label= labelnames[k_i])
@@ -924,28 +973,29 @@ class hierarchical_model:
                 w_ARI = 0
                 w_ACC = 0
                 for clus in range(nclus):
-
-                    classifier = sklearn.linear_model.SGDClassifier(loss='log')
                     weights_logres = self.probs[lvl][:,clus].copy()
-                    for k_i in set(ind):
-                        weights_logres[ind==k_i] /= (sum(ind==k_i)/self.N)
-                    classifier.fit(self.latent[lvl], ind, sample_weight=weights_logres)
-                    preds = classifier.predict(self.latent[lvl])
+                    preds, acc, ari = logres_scores(self.latent[lvl], ind, weights_logres, K=5)
+#                     classifier = sklearn.linear_model.SGDClassifier(loss='log')
+                    
+#                     for k_i in set(ind):
+#                         weights_logres[ind==k_i] /= (sum(ind==k_i)/self.N)
+#                     classifier.fit(self.latent[lvl], ind, sample_weight=weights_logres)
+#                     preds = classifier.predict(self.latent[lvl])
 
                     ax = fig.add_subplot(int(nclus/6)+1,min(nclus,6),clus+1)
                     rgba_cols = np.ones((self.N,4))
 
                     for k_i in set(preds):
                         rgba_cols[preds==k_i,:3] = self.colors[int(k_i)]
-                        mask = np.array(self.probs[lvl][:,clus]>0.1)*np.array(preds==k_i)
+                        mask = np.array(weights_logres>0.1)*np.array(preds==k_i)
                         c_i+=1
-                        ax.scatter(self.latent[lvl][mask,0],self.latent[lvl][mask,1], c=rgba_cols[mask,:], label=labelnames[k_i])
-                    ari = adjusted_rand_score(preds[mask], ind[mask])
-                    acc = accuracy_score(preds, ind, sample_weight = self.probs[lvl][:,clus])
-    #                 ax.set_title('Cluster %i - ARI: %.3f, ACC: %.3f'%(clus+1,ari,acc))
+                        ax.scatter(self.latent[lvl][mask,0],self.latent[lvl][mask,1], c=rgba_cols[mask,:], label=labelnames[int(k_i)])
+#                     ari = adjusted_rand_score(preds[mask], ind[mask])
+#                     acc = accuracy_score(preds, ind, sample_weight = self.probs[lvl][:,clus])
+#                     ax.set_title('Cluster %i - ARI: %.3f, ACC: %.3f'%(clus+1,ari,acc))
                     ax.set_title('Cluster %i - ACC: %.3f'%(clus+1,acc))
-                    w_ARI+= ari*(sum(self.probs[lvl][:,clus]>0.1))/self.N
-                    w_ACC+= acc*(sum(self.probs[lvl][:,clus]>0.1))/self.N
+                    w_ARI+= ari*(sum(weights_logres))/self.N
+                    w_ACC+= acc*(sum(weights_logres))/self.N
     #             plt.suptitle('log.reg. - w. ARI: %.3f, w. ACC: %.3f'%(w_ARI, w_ACC))
                 plt.suptitle('log.reg. - w. ACC: %.3f'%(w_ACC))
                 acc_scores.append(w_ACC)
