@@ -19,7 +19,7 @@ for (i in c(5,25,50,150,250, 500)) {
     
   #big
   params<- setParam(params, 'group.prob',c(0.24,0.12,0.10,0.02,0.37,0.15))
-  de_prob = 2.5/i
+  de_prob = 1/(i/80)
   params <- setParam(params, 'de.prob',c(de_prob,de_prob,de_prob,de_prob,de_prob,de_prob))
   params<- setParam(params, 'de.facLoc',0.1)
   params <- setParam(params, 'batchCells', 750)
@@ -37,3 +37,49 @@ for (i in c(5,25,50,150,250, 500)) {
     
   print(c(i,' done'))
 }
+
+
+i=150
+
+params <- newSplatParams()
+params <- setParam(params, 'nGenes', i)
+
+#small
+params<- setParam(params, 'group.prob',c(0.2,0.2,0.2,0.2,0.2))
+de_prob = 5/i
+params <- setParam(params, 'de.prob',c(de_prob,de_prob,de_prob,de_prob,de_prob))
+params<- setParam(params, 'de.facLoc',3)
+params <- setParam(params, 'batchCells', 500)
+params<- setParam(params, 'de.facScale',0)
+
+#big    5,25,50,150,250, 500
+i=500
+#de_prob = 1/2, 1/3, 1/2.5, 1/(i/80)
+params <- newSplatParams()
+params <- setParam(params, 'nGenes', i)
+
+params<- setParam(params, 'group.prob',c(0.24,0.12,0.10,0.02,0.37,0.15))
+de_prob = 1/(i/80)
+params <- setParam(params, 'de.prob',c(de_prob,de_prob,de_prob,de_prob,de_prob,de_prob))
+params<- setParam(params, 'de.facLoc',0.1)
+params <- setParam(params, 'batchCells', 750)
+params<- setParam(params, 'de.facScale',0.4)
+
+sim <- splatSimulateGroups(params)
+df <- counts(sim)
+
+sim <-logNormCounts(sim)
+sim <- runPCA(sim)
+plotPCA(sim, colour_by = "Group")
+
+
+#write.csv(df,paste0("./splatter_small_",i,".csv"))
+write.csv(df,paste0("./splatter_big_",i,".csv"))
+
+labels <- colData(sim)$Group
+#write.csv(labels,paste0("./splatter_small_",i,"_labels.csv"))
+write.csv(labels,paste0("./splatter_big_",i,"_labels.csv"))
+
+print(c(i,' done'))
+
+

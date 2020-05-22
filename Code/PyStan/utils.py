@@ -611,7 +611,7 @@ class hierarchical_model:
                                 if samplingmethod == 'VB':
                                     W_found = np.reshape(np.array(dfmean[dfmean.index.str.startswith('W.')]),(M,D,n_subs)).T[n_subs2_mask]
                                     theta_found = np.array(dfmean[dfmean.index.str.startswith('theta.')])[n_subs2_mask]
-                                    newfound_latent = np.reshape(np.array(dfmean[dfmean.index.str.startswith('z.')]),(M,N))
+                                    newfound_latent = np.reshape(np.array(dfmean[dfmean.index.str.startswith('z.')]),(M,N)).T
                                     mu_found_r = np.reshape(np.array(dfmean[dfmean.index.str.startswith('raw_mu.')]),(D,n_subs)).T[n_subs2_mask]
                                     sigma_found_r = np.array(dfmean[dfmean.index.str.startswith('raw_sigma.')])[n_subs2_mask]
                                     mu_found = np.reshape(np.array(dfmean[dfmean.index.str.startswith('mu.')]),(D,n_subs)).T[n_subs2_mask]
@@ -634,7 +634,7 @@ class hierarchical_model:
                                 mu_min_found = np.array([np.min(x[moppcas_cats==k_i],axis=0) for k_i in moppcas_cats_set])
                                 mu_std_found = np.array([np.std(x[moppcas_cats==k_i],axis=0) for k_i in moppcas_cats_set])
 
-                                init_dic = {'raw_mu':mu_found_r, 'theta':theta_found, 'raw_sigma':sigma_found_r, 'R':rawprobs, 'W':W_found, 'z':z_found}
+                                init_dic = {'raw_mu':mu_found_r, 'theta':theta_found, 'raw_sigma':sigma_found_r, 'R':rawprobs, 'W':W_found, 'z':newfound_latent}
 #                                     n_subs, subs = est_k(x[levelcats==cl], k_max = n_subs2, k_min=n_subs2, gmm = gmm, refs = est_ref, weights=clus_probs)    
                                 n_subs = n_subs2
                                 n_subc_clus.append(n_subs)
