@@ -3,7 +3,10 @@
 This repository contains my thesis, along with 
 the relevant code and literature used for it. 
 
-The thesis itself can be found on 
+The thesis itself can be found here:
+https://www.overleaf.com/read/msrjkjfkthyb
+
+My first writings, which mainly include the basics of probabliity theory, can be found here:
 https://www.overleaf.com/read/bsdqzxcvhcgw
 
 The folder 'TF-tutorials' contains some of the tutorials on TensorFlow 
