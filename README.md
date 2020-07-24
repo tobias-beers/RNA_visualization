@@ -6,9 +6,7 @@ Tobias Beers and Perry Moerland
 This repository contains code, results and literature for the MSc project of Tobias Beers. 
 
 The final version of the thesis itself can be found here:
-https://www.overleaf.com/read/msrjkjfkthyb
-
-Some first writings, which mainly include the basics of probabliity theory, can be found here:
+https://www.overleaf.com/read/msrjkjfkthyb. Some first writings, which mainly include the basics of probabliity theory, can be found here:
 https://www.overleaf.com/read/bsdqzxcvhcgw
 
 Directory structure:
