@@ -1,5 +1,5 @@
 # Owner
-Tobias Beers and Perry Moerland
+Tobias Beers
 
 # Hierarchical visualization of single-cell RNA-seq data
 
