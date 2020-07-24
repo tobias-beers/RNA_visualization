@@ -1,18 +1,18 @@
+# Owner
+Tobias Beers and Perry Moerland
+
 # Hierarchical visualization of single-cell RNA-seq data
 
-This repository contains my thesis, along with 
-the relevant code and literature used for it. 
+This repository contains code, results and literature for the MSc project of Tobias Beers. 
 
-The thesis itself can be found here:
+The final version of the thesis itself can be found here:
 https://www.overleaf.com/read/msrjkjfkthyb
 
-My first writings, which mainly include the basics of probabliity theory, can be found here:
+Some first writings, which mainly include the basics of probabliity theory, can be found here:
 https://www.overleaf.com/read/bsdqzxcvhcgw
 
-The folder 'TF-tutorials' contains some of the tutorials on TensorFlow 
-Probability in jupyter notebook format (the tutorials itself are published on https://www.tensorflow.org/probability/overview). Literature is contained within 
-the 'literature'-folder.
-Both TensorFlow Probability and PyStan have been used as environments 
-for this project. The 'code'-folder contains the relevant pieces of code 
-for this project.
+Directory structure:
+   * 'Code': Both TensorFlow Probability and PyStan have been used as environments for this project. This directory contains the relevant pieces of code for this project.
+   * 'TF_tutorials': some tutorials on TensorFlow Probability in Jupyter Notebook format. The tutorials themselves are published on https://www.tensorflow.org/probability/overview). 
+   * 'literature': some relevant literature
 
