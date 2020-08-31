@@ -1,29 +1,453 @@
-\documentclass{article}
-\usepackage[utf8]{inputenc}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Masters/Doctoral Thesis 
+% LaTeX Template
+% Version 1.43 (17/5/14)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original authors:
+% Steven Gunn 
+% http://users.ecs.soton.ac.uk/srg/softwaretools/document/templates/
+% and
+% Sunil Patel
+% http://www.sunilpatel.co.uk/thesis-template/
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+% Note:
+% Make sure to edit document variables in the Thesis.cls file
+%
+%
+% Modified and Adapted by Michael Lees 2020
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[11pt, oneside]{Thesis} % The default font size and one-sided printing (no margin offsets)
+
+% \graphicspath{{Pictures/}} % Specifies the directory where pictures are stored
+
+\usepackage[square, numbers, comma, sort&compress]{natbib} % Use the natbib reference package - read up on this to edit the reference style; if you want text (e.g. Smith et al., 2012) for the in-text references (instead of numbers), remove 'numbers' 
+\usepackage[ruled,vlined]{algorithm2e}
 \usepackage{amsmath}
+\usepackage{booktabs}
+
+\usepackage[utf8]{inputenc}
+% \usepackage{amsmath}
 \usepackage{bm}
 \usepackage[normalem]{ulem}
+% \usepackage{todonotes}
+\usepackage{amssymb}
 % \usepackage[colorlinks]{hyperref}
 \usepackage[symbols,nogroupskip,sort=none]{glossaries-extra}
+\usepackage{makecell}
+% \usepackage{minted}
+\usepackage[singlelinecheck=false,font=small,labelfont=bf]{caption}
+\usepackage{wrapfig}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{multirow}
+\usepackage{subcaption}
+\usepackage[T1]{fontenc}
+\usepackage{lstbayes}
 
-\title{Hierarchical visualization of single-cell RNA-seq data}
-\author{Tobias Beers}
-\date{November 2019}
+\usepackage{titlesec, blindtext, color}
+\definecolor{gray75}{gray}{0.75}
+\newcommand{\hsp}{\hspace{20pt}}
+
+\titleformat{\chapter}[hang]{\Huge\bfseries}{\thechapter\hsp\textcolor{gray75}{|}\hsp}{0pt}{\Huge\bfseries}
+
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+% \usepackage[demo]{graphicx}
+\captionsetup[table]{singlelinecheck=off}
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\hypersetup{urlcolor=blue, colorlinks=true} % Colors hyperlinks in blue - change to black if annoying
+\title{\ttitle} % Defines the thesis title - don't touch this
 
 \begin{document}
 
-\glsaddall
+\frontmatter % Use roman page numbering style (i, ii, iii, iv...) for the pre-content pages
+\setstretch{1.3} % Line spacing of 1.3
 
-\maketitle
+% Define the page headers using the FancyHdr package and set up for one-sided printing
+\fancyhead{} % Clears all page headers and footers
+\rhead{\thepage} % Sets the right side header to show the page number
+\lhead{} % Clears the left side page header
 
-\tableofcontents
+\pagestyle{fancy} % Finally, use the "fancy" page style to implement the FancyHdr headers
 
-\include{todo}
-\include{introduction}
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % New command to make the lines in the title page
 
-\bibliographystyle{plain}
-\bibliography{refs}
+% PDF meta-data
+\hypersetup{pdftitle={\ttitle}}
+\hypersetup{pdfsubject=\subjectname}
+\hypersetup{pdfauthor=\authornames}
+\hypersetup{pdfkeywords=\keywordnames}
 
-\include{Appendices}
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
 
-\end{document}
+\begin{titlepage}
+\begin{center}
+
+\textsc{\LARGE \univname}\\[1.5cm] % University name
+\textsc{\Large Masters Thesis}\\[0.5cm] % Thesis type
+
+\HRule \\[0.4cm] % Horizontal line
+{\huge \bfseries \ttitle}\\[0.4cm] % Thesis title
+\HRule \\[1.5cm] % Horizontal line
+ 
+\begin{minipage}{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Author:}\\
+\href{http://yourwebaddress.com}{\authornames} % Author name - remove the \href bracket to remove the link
+\end{flushleft}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+\begin{flushright} \large
+\emph{Supervisor:} \\
+\href{http://mhlees.com}{\supname} % Supervisor name - remove the \href bracket to remove the link  
+\end{flushright}
+\end{minipage}\\[3cm]
+ 
+\large \textit{A thesis submitted in partial fulfilment of the requirements\\ for the degree of \degreename}\\[0.3cm] % University requirement text
+\textit{in the}\\[0.4cm]
+\groupname\\\deptname\\[2cm] % Research group name and department name
+ 
+{\large \today}\\[2cm] % Date
+\includegraphics[width=0.6\textwidth]{clslogo.png} % Include Computational Science Logo
+ 
+\vfill
+\end{center}
+
+\end{titlepage}
+
+%----------------------------------------------------------------------------------------
+%	DECLARATION PAGE
+%	Your institution may give you a different text to place here
+%----------------------------------------------------------------------------------------
+
+\Declaration{
+
+\addtocontents{toc}{\vspace{1em}} % Add a gap in the Contents, for aesthetics
+
+I, \authornames, declare that this thesis, entitled `\ttitle' and the work presented in it are my own. I confirm that:
+
+\begin{itemize} 
+\item[\tiny{$\blacksquare$}] This work was done wholly or mainly while in candidature for a research degree at the University of Amsterdam.
+\item[\tiny{$\blacksquare$}] Where any part of this thesis has previously been submitted for a degree or any other qualification at this University or any other institution, this has been clearly stated.
+\item[\tiny{$\blacksquare$}] Where I have consulted the published work of others, this is always clearly attributed.
+\item[\tiny{$\blacksquare$}] Where I have quoted from the work of others, the source is always given. With the exception of such quotations, this thesis is entirely my own work.
+\item[\tiny{$\blacksquare$}] I have acknowledged all main sources of help.
+\item[\tiny{$\blacksquare$}] Where the thesis is based on work done by myself jointly with others, I have made clear exactly what was done by others and what I have contributed myself.\\
+\end{itemize}
+
+
+% Signed: \\\\\includegraphics[width=3cm]{Pictures/yoursignature.pdf} \\
+%\rule[1em]{25em}{0.5pt} % This prints a line for the signature
+ 
+Date: 10 July 2020\\
+%\rule[1em]{25em}{0.5pt} % This prints a line to write the date
+}
+
+\clearpage % Start a new page
+
+%----------------------------------------------------------------------------------------
+%	QUOTATION PAGE
+%----------------------------------------------------------------------------------------
+
+\pagestyle{empty} % No headers or footers for the following pages
+
+\null\vfill % Add some space to move the quote down the page a bit
+
+\textit{``Statistics is the grammar of science."}
+
+\begin{flushright}
+Karl Pearson
+\end{flushright}
+
+\vfill\vfill\vfill\vfill\vfill\vfill\null % Add some space at the bottom to position the quote just right
+
+\clearpage % Start a new page
+
+%----------------------------------------------------------------------------------------
+%	ABSTRACT PAGE
+%----------------------------------------------------------------------------------------
+
+\addtotoc{Abstract} % Add the "Abstract" page entry to the Contents
+
+\abstract{\addtocontents{toc}{\vspace{1em}} % Add a gap in the Contents, for aesthetics
+% Include your abstract here 
+% Abstracts must include sufficient information for reviewers to judge the nature and significance
+% of the topic, the adequacy of the investigative strategy, the nature of the results, and the
+% conclusions. The abstract should summarize the substantive results of the work and not merely
+% list topics to be discussed. 
+% Length 200-400 words.
+Single cell RNA sequencing (scRNA-seq) has progressed the biological sciences by allowing researchers to obtain a rough estimate of the number of transcripts in a cell for every gene. Modern advancements in the field of scRNA-seq have enabled the reading of thousands of genes in thousands to even millions of cells. Techniques like scRNA-seq therefore return high dimensional data-sets, which are hard to visualize in only two dimensions. The analysis and visualization of such data have been performed by linear (PCA, PPCA) and later non-linear (t-SNE, UMAP) dimensionality reduction techniques. In this report, we examine the role of hierarchical mixtures of probabilistic PCAs (HmPPCAs) for the visualization of scRNA-seq data. At the same time, we explore the use of probabilistic programming to define and solve probabilistic models easily, without the need to derive the necessary equations to solve them manually.
+
+The HmPPCAs model was implemented in the probabilistic programming language Stan and evaluated on 2 scRNA-seq data-sets from the literature and 5 simulated data-sets of various dimensionalities. The model is solved using NUTS (an extension to Hamiltonian Monte Carlo) and ADVI (an extension to variational inference) to get a better grasp of two different methods used in probabilistic programming. We then compared the HmPPCAs results with results obtained using other popular techniques like t-SNE and UMAP. The plots obtained through all methods were tested for their cell type separability.
+
+The results show that ADVI provides statistical modellers with a fast way to approach solutions without sacrificing much of the performance. Although HmPPCAs did not achieve the same visualization performance as UMAP and t-SNE, the results show that extending linear dimensionality reduction techniques with hierarchy can show structures that are not noticeable when using a single non-hierarchical dimensionality reduction.
+% Where a PPCA shows clusters within the whole data-set, the addition of hierarchy reveals structures within those clusters that would otherwise not have been noticeable.
+}
+
+\clearpage % Start a new page
+
+%----------------------------------------------------------------------------------------
+%	ACKNOWLEDGEMENTS
+%----------------------------------------------------------------------------------------
+
+\setstretch{1.3} % Reset the line-spacing to 1.3 for body text (if it has changed)
+
+\acknowledgements{\addtocontents{toc}{\vspace{1em}} % Add a gap in the Contents, for aesthetics
+
+% Thank the people that have helped, supervisors family etc.
+% \todo{do cool thing with this}
+% I wish to acknowledge that black lives matter.
+% Joel, Ivander, Mama, Perry zoieso,  Ruby?, Ismay?, Emma???? Anna?,  Roberto?
+I want to thank Perry for helping and understanding and dedicating so much of his time to me and this project.
+
+I also thank Joel, for guiding me through all the negatives, and I thank Ivander for bringing all the positives. I love these people!
+
+I thank the people who helped me for making my life easier and I thank the difficult moments in my life for teaching me how to grow.
+
+I feel very grateful towards the plants and trees on this planet, some of which who were the best listeners and who always seemed to know the right thing to do.
+% I also thank Joel, for helping me with the negatives and .
+% And I thank Ivander for bringing the positives! I love these people!
+
+I thank my mom, for listening, talking and being cool!
+
+And I thank the universe for giving birth to this all!
+}
+\clearpage % Start a new page
+
+%----------------------------------------------------------------------------------------
+%	LIST OF CONTENTS/FIGURES/TABLES PAGES
+%----------------------------------------------------------------------------------------
+
+\pagestyle{fancy} % The page style headers have been "empty" all this time, now use the "fancy" headers as defined before to bring them back
+
+\lhead{\emph{Contents}} % Set the left side page header to "Contents"
+\tableofcontents % Write out the Table of Contents
+
+\lhead{\emph{List of Figures}} % Set the left side page header to "List of Figures"
+\listoffigures % Write out the List of Figures
+
+\lhead{\emph{List of Tables}} % Set the left side page header to "List of Tables"
+\listoftables % Write out the List of Tables
+
+\lhead{\emph{List of Algorithms}} % Set the left side page header to "List of Algorithms"
+\addtotoc{List of Algorithms}
+\listofalgorithms % Write out the List of Tables
+
+%----------------------------------------------------------------------------------------
+%	ABBREVIATIONS
+%----------------------------------------------------------------------------------------
+
+\clearpage % Start a new page
+
+\setstretch{1.5} % Set the line spacing to 1.5, this makes the following tables easier to read
+
+\lhead{\emph{Abbreviations}} % Set the left side page header to "Abbreviations"
+\listofsymbols{ll} % Include a list of Abbreviations (a table of two columns)
+{
+\textbf{ADVI} & \textbf{A}utomatic \textbf{D}ifferentiation \textbf{V}ariational \textbf{I}nference\\
+\textbf{BIC} & \textbf{B}ayesian \textbf{I}nformation \textbf{C}riterion\\
+\textbf{CSL} & \textbf{C}omputational \textbf{S}cience \textbf{L}ab\\
+\textbf{ELBO} & \textbf{E}vidence \textbf{L}ower \textbf{BO}und\\
+\textbf{EM} & \textbf{E}xpectation-\textbf{M}aximization\\
+\textbf{GMM} & \textbf{G}aussian \textbf{M}ixture \textbf{M}odel\\
+\textbf{HMC} & \textbf{H}amiltonian \textbf{M}onte \textbf{C}arlo\\
+\textbf{HmPPCAs} & \textbf{H}ierarchical \textbf{M}o\textbf{PPCAs}\\
+\textbf{HSPC} & \textbf{h}ematopoietic \textbf{s}tem and \textbf{p}rogenitor \textbf{c}ells\\
+\textbf{LT\_SHC} & \textbf{l}ong-\textbf{t}erm \textbf{h}ematopoietic \textbf{s}tem \textbf{c}ells\\
+\textbf{MC} & \textbf{M}onte \textbf{C}arlo\\
+\textbf{ML} & \textbf{M}aximum \textbf{L}ikelihood\\
+\textbf{MoPPCAs} & \textbf{M}ixture \textbf{o}f \textbf{PPCAs}\\
+\textbf{NUTS} & \textbf{N}o \textbf{U}-\textbf{T}urn \textbf{S}ampler\\
+\textbf{PCA} & \textbf{P}rincipal \textbf{C}omponent \textbf{A}nalysis\\
+\textbf{PPCA} & \textbf{P}robabilistic \textbf{PCA}\\
+\textbf{scRNA-seq} & \textbf{S}ingle \textbf{C}ell \textbf{RNA S}equencing\\
+\textbf{t-SNE} & \textbf{t}-\textbf{D}istributed \textbf{S}tochastic \textbf{N}eighbour \textbf{E}mbedding\\
+\textbf{UMAP} & \textbf{U}niform \textbf{M}anifold \textbf{A}pproximation and \textbf{P}rojection\\
+\textbf{UvA} & \textbf{U}niversiteit \textbf{v}an \textbf{A}msterdam\\
+\textbf{VB} & \textbf{V}ariational \textbf{B}ayes\\
+\textbf{VI} & \textbf{V}ariational \textbf{I}nference\\
+
+
+% \textbf{Acronym} & \textbf{W}hat (it) \textbf{S}tands \textbf{F}or \\
+}
+
+%----------------------------------------------------------------------------------------
+%	PHYSICAL CONSTANTS/OTHER DEFINITIONS
+%----------------------------------------------------------------------------------------
+
+% \clearpage % Start a new page
+
+% \lhead{\emph{Physical Constants}} % Set the left side page header to "Physical Constants"
+
+% \listofconstants{lrcl} % Include a list of Physical Constants (a four column table)
+
+
+%{
+%Speed of Light & $c$ & $=$ & $2.997\ 924\ 58\times10^{8}\ \mbox{ms}^{-\mbox{s}}$ (exact)\\
+%% Constant Name & Symbol & = & Constant Value (with units) \\
+%}
+
+%----------------------------------------------------------------------------------------
+%	SYMBOLS
+%----------------------------------------------------------------------------------------
+
+\clearpage % Start a new page
+
+\lhead{\emph{Symbols}} % Set the left side page header to "Symbols"
+
+% \printunsrtglossary[type=symbols,style=long]
+
+\listofnomenclature{lll} % Include a list of Symbols (a three column table)
+{
+
+$\bm{x}$ & $d$-dimensional observed data-point\\
+$\bm{X}$ & $n\times d$ matrix describing the observed data-set\\
+$\bm{z}$ & $m$-dimensional latent data-point\\
+$\bm{Z}$ & $n\times m$ matrix describing the latent data-set\\
+$\bm{\mu}$ & $d$-Dimensional mean of $\bm{x}$\\
+$\sigma$ & Standard deviation of $\bm{x}$\\
+$\bm{\Sigma}$ & Covariance matrix of $\bm{X}$\\
+$n$ & Number of data-points in data-set\\
+$d$ & Number of dimensions of one variable\\
+$K$ & Number of mixture components\\
+$\pi_k$ & Mixture coefficients\\
+
+
+
+% $a$ & distance & m \\
+% $P$ & power & W (Js$^{-1}$) \\
+% Symbol & Name & Unit \\
+
+% & & \\ % Gap to separate the Roman symbols from the Greek
+
+% $\omega$ & angular frequency & rads$^{-1}$ \\
+% Symbol & Name & Unit \\
+}
+
+%----------------------------------------------------------------------------------------
+%	DEDICATION
+%----------------------------------------------------------------------------------------
+
+\setstretch{1.3} % Return the line spacing back to 1.3
+
+\pagestyle{empty} % Page style needs to be empty for this page
+
+\addtocontents{toc}{\vspace{2em}} % Add a gap in the Contents, for aesthetics
+
+%----------------------------------------------------------------------------------------
+%	THESIS CONTENT - CHAPTERS
+%----------------------------------------------------------------------------------------
+
+\mainmatter % Begin numeric (1,2,3...) page numbering
+
+\pagestyle{fancy} % Return the page headers back to the "fancy" style
+% \pagestyle{thesis}
+% Include the chapters of the thesis as separate  tex files from the Chapters folder
+% Change the file names if you prefer
+
+%This structure provides a bare bones essentials of the thesis and some indicative length
+%This structure may not fit your thesis perfectly, but be sure to include these components somehow.
+%It is possible to split the chapters up (E.g., 2 methods chapter, Experiment and Results as two, etc.)
+
+% The typical length may be between 43 - 64 pages. Do not worry if you go slightly larger or smaller than this. 
+% But a thesis of 20 pages, or 100 pages may suggest you've been to brief or too verobse.
+%NOTE - there is not strict limit/minimum.
+
+
+% \input{Chapters/Introduction} %Set out your thesis and state your research question (5-8 pages)
+% \input{Chapters/LiteratureReview} %Related literature and material (8-12 pages)
+% \input{Chapters/Methods} %Details of your approach (10-15 pages)
+% \input{Chapters/ExperimentsandResults} %Evaluation/testing of your hypothesis (10-15 pages)
+% \input{Chapters/Discussion} %Evaluation/testing of your hypothesis (5-8 pages)
+% \input{Chapters/ConclusionsandFutureWork} % (5-6 pages)
+
+
+
+
+\input{Introduction}
+\input{Approach}
+\input{Methods}
+\input{Results}
+\input{Discussion}
+
+
+%----------------------------------------------------------------------------------------
+%	THESIS CONTENT - APPENDICES
+%----------------------------------------------------------------------------------------
+
+\addtocontents{toc}{\vspace{2em}} % Add a gap in the Contents, for aesthetics
+
+%\appendix % Cue to tell LaTeX that the following 'chapters' are Appendices
+
+% Include the appendices of the thesis as separate files from the Appendices folder
+% Uncomment the lines as you write the Appendices
+
+\appendix
+% \input{Appendices}
+
+% \input{Appendices/AppendixA}
+\input{Appendices/AppendixB}
+\input{Appendices/AppendixC}
+\input{Appendices/AppendixD}
+\input{Appendices/AppendixE}
+
+\addtocontents{toc}{\vspace{2em}} % Add a gap in the Contents, for aesthetics
+
+\backmatter
+
+%----------------------------------------------------------------------------------------
+%	BIBLIOGRAPHY
+%----------------------------------------------------------------------------------------
+
+\label{References}
+
+\lhead{\emph{References}} % Change the page header to say "Bibliography"
+
+\bibliographystyle{unsrtnat} % Use the "unsrtnat" BibTeX style for formatting the Bibliography
+
+\bibliography{refs} % The references (bibliography) information are stored in the file named "Bibliography.bib"
+
+
+
+
+\end{document}  

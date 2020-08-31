@@ -1,0 +1,85 @@
+\chapter{Methods}\label{sec:methods}
+\lhead{\emph{Methods}}
+
+\section{Data description}\label{sec:data}
+Two types of data-sets were used. The first type consisted of simulated data-sets generated using Splatter \cite{zappia2017splatter}. This is an R-package that allows the user to generate customized scRNA-seq data-sets. Since Splatter data-sets are easily obtainable and customizable, two different types of data-sets were generated: one simple type which contained five groups of cells that were easy to differentiate from each other and one complex type containing six groups of cells which showed more overlap in their patterns. The difference in complexity of these data-sets was regulated by use of the `de.facLoc', `de.facScale' and the `de.prob' parameters. These parameters describe how easily diffent groups can be separated. The last parameter `de.prob', the probability with which genes in a group were differentially expressed, was set higher for the complex data-sets than for the simple data-sets, as the different groups of cell-types were not distinguishable without doing so. For the simple Splatter data-sets, de.prob was set higher for the data-sets containing fewer genes, to make sure that each data-set contained enough differentially expressed genes. For the complex Splatter data-sets, this was not necessary, as de.prob was high enough already for even the data-set containing 5 genes. For both the simple and the complex types of data-sets, data-sets of 5, 25, 50, 150 and 250 genes were created.
+
+The other type of data-sets, were the scRNA-seq data-sets published by Darmanis \textit{et al.} (2015)\footnote{retrieved from \url{https://hemberg-lab.github.io/scRNA.seq.datasets/human/brain/}} \cite{darmanis2015survey} and Nestorowa \textit{et al.} (2016)\footnote{retrieved from \url{http://blood.stemcells.cam.ac.uk/single_cell_atlas.html}} \cite{nestorowa2016single}. They have respectively measured the expression of 22088 and 4774 genes across 466 and 1656 cells. The Darmanis samples were retrieved from adult and fetal human brain tissue and the samples from the Nestorowa data-set were obtained from mouse hematopoietic stem and progenitor cells. The Darmanis data-set was labeled by ten different cell types: groups of oligodendrocyte precursor cells, oligodendrocytes, astrocytes, microglia, neurons, endothelial cells, fetal replicating cells, fetal quiescent cells, a hybrid group of cells and unannotated cells. The Nestorowa data-set was labeled with three different cell types: progenitor cells, hematopoietic stem and progenitor cells (\textbf{HSPC}) and long-term hematopoietic stem cells (\textbf{LT\_SHC}). The Darmanis data-set was transformed by taking $\log{(\bm{X}}+1)$. The Nestorowa data-set was used as is as the authors had normalised the gene counts themselves according to the method described by Lun \textit{et al.} (2016) \cite{lun2016pooling}. To save computational cost, these data-sets were filtered to include only the 500 genes that showed the largest variance.
+All data-sets are described in Table \ref{tab:datasets}.
+
+\small
+
+\begin{table}
+\caption[Properties of the gene expression data-sets.]{\textbf{Properties of the gene expression data-sets.}}
+    \centering
+    \small
+    \begin{tabular}{l|r|r|r|r|r|r}
+     & Genes & Cells & cell types & de.prob & de.facLoc & de.facScale\\
+    \hline
+    \multirow{5}{*}{\makecell{Simple\\Splatter}} & 5 & 500 & 5 & 0.5 & 3 & 0 \\
+      & 25 & 500 & 5 & 0.1 & 3 & 0 \\
+       & 50 & 500 & 5 & 0.05 & 3 & 0 \\
+       & 150 & 500 & 5 & 0.017 & 3 & 0 \\
+        & 250 & 500 & 5 & 0.01 & 3 & 0 \\
+    \multirow{5}{*}{\makecell{Complex\\Splatter}} & 5 & 750 & 6 & 0.5 & 0.1 & 0.4 \\
+      & 25 & 750 & 6 & 0.5 & 0.1 & 0.4 \\
+       & 50 & 750 & 6 & 0.5 & 0.1 & 0.4 \\
+       & 150 & 750 & 6 & 0.5 & 0.1 & 0.4 \\
+        & 250 & 750 & 6 & 0.5 & 0.1 & 0.4 \\
+    Darmanis & \makecell{500 (out\\of 22088)}& 466 & 9 & - & - & - \\
+    Nestorowa & \makecell{500 (out\\of 4774)}& 1656 & 3 & - & - & - \\
+    \end{tabular}
+    \label{tab:datasets}
+\end{table}
+
+\normalsize
+
+\section{Programming environment}
+For this project, programming was done by use of Python (Python 3.8.2-1), with the statistical models specified in Stan using the PyStan package (Pystan 2.19.1.1) \cite{stan2018pystan} on a machine running Arch Linux 5.5.13. Stan models were compiled using the GCC compiler (GCC 9.3.0-1).
+
+
+\section{Experiment set-up}
+All data-sets were evaluated using the HmPPCAs model, using both NUTS and VB. The parameter settings were kept constant for all data-sets. These parameter settings are given in Table \ref{tab:params}.
+
+\begin{table}
+\caption[Parameter settings of the HmPPCAs model.]{\textbf{Parameter settings of the HmPPCAs model.}}
+    \centering
+    \begin{tabular}{l|l|c}
+        Parameter & Comments & value \\
+        \hline
+        \textbf{General} & & \\
+        M & Number of latent dimensions & 2 \\
+        max\_depth & Maximum number of levels before termination & 5\\
+        min\_clus\_size & \makecell[l]{If a cluster contains less than this number\\of data-points, it is not divided\\into further sub-clusters anymore} & 10 \\
+        n\_try & \makecell[l]{Number of trials to find a MoPPCAs fit\\with the adequate number of clusters} & 3\\
+        k\_max & Maximum number of sub-clusters per cluster & 3\\
+         & & \\
+        \textbf{NUTS} & & \\
+        iterations & Number of iterations & 300\\
+        chains & Number of Markov chains running simultaneously & 1\\
+        warmup & \makecell[l]{Number of steps used for step-size\\adaptation but not for inference} & 150\\
+        thin & \makecell[l]{Number of samples skipped between saved samples,\\to reduce the correlation between successive samples} & 1\\
+        & & \\
+        \textbf{ADVI} & & \\
+        iterations & Number of iterations & 10000\\
+        algorithm & Mean field or Full-rank & Mean field\\
+        & & \\
+        \textbf{Visualization} & & \\
+        vis\_theshold & \makecell[l]{Points that are part of a cluster with a\\probability lower than this are not plotted} & 0.05\\
+    \end{tabular}
+    % \medskip
+    \small
+    These settings were maintained for all data-sets.
+    \label{tab:params}
+\end{table}
+
+The performance of the model was evaluated on all data-sets described in section \ref{sec:data}. Performance, as well as the computation time, was measured both when using NUTS and VB (section \ref{sec:performance_measures}). Performance was also measured when using UMAP \cite{mcinnes2018umap} and t-SNE \cite{maaten2008visualizing} as a baseline. For this, the UMAP package (UMAP 0.4) \cite{mcinnes2018umap} and the `sklearn' package `TSNE' were used. All parameters were left at their defaults, except for the perplexity parameter for t-SNE. Multiple values for the perplexity were tried, a value of $30.0$ was found to yield the best results for the Splatter data-sets, a perplexity value of $50.0$ was used when analyzing the Darmanis and Nestorowa data-sets. The performance at the top-level was also recorded to represent a standard PPCA method.
+
+\subsection{Visualization}\label{sec:visualization}
+After every level, including the top-level which initializes a PPCA on the complete data-set, the latent data is gathered for every group. For every level, the latent data can then be plotted for every cluster. All data-points are plotted in every plot, but the responsibility terms determine the density of the ink with which the points are plotted. This has the effect that most data-points are plotted only in the plot that portrays the latent space of the cluster they belong to, with the occasional data-point being vaguely represented in multiple plots that the data-point might belong to with lesser certainty.
+
+\subsection{Performance measures}\label{sec:performance_measures}
+Because the main purpose of the model was to help with visualization, the plots are being evaluated in terms of how well cell types could be separated. In the optimal case, the model produces plots in which the different cell-types are clearly separated from each other into individual clusters, possibly creating even better plots on deeper levels. To evaluate the visual separability of the cell-types, a multinomial logistic regression model was used. The logistic regression from the `sklearn' package `LogisticRegression' was used for this and `lbfgs' was used as its optimization algorithm. For every plot on every level, a logistic regression was performed within a $5$-fold cross-validation scheme. Technically, all points appear in every plot with a non-zero probability, but the points were only used for the logistic regression in the plot that they appeared in with the highest probability. In practice, most points appear with a probability of almost $1$ in one plot and with a probability close to $0$ in the other plots, so the effect of this categorization of data-points into plots is minimal. The data-points were always divided into five folds of approximately equal summed responsibility terms. The accuracy was then measured from these results. The final accuracy taken as evaluation for the individual plot was the average of the accuracies of the five test-sets. The accuracy for the whole level was given by the weighted accuracy of all the plots within that level, where the ratio of data-points in a plot was used as its weight.
+When reporting the accuracy of the model on an entire data-set, the level with the highest accuracy was used as a reference. This was usually the deepest level.
+
+Apart from the visualization evaluation, the time it took to perform each analysis was also recorded. Whenever a model in Stan would be initialized or finished, the time was noted, so that the difference between the finishing time and start time could be reported as the computational time of a model. This included the individual times of the top-level PPCA. UMAP and t-SNE were left out of this comparison, as these techniques were used to create a single visualization result, so this would be an unfair comparison with inference techniques that produced the entire posterior distribution of all parameters. Because the computation time to fit a complete HmPPCAs model is highly dependent on the number of levels of the model and the number of mixture components that the data-set consists of, the computation time of the individual MoPPCAs models within the HmPPCAs was measured rather than the time it took to solve the whole HmPPCAs model. The number of mixture components that a MoPPCAs model was trying to find was noted to see if it had an effect on the computation time. Sometimes the number of mixture components that a MoPPCAs model had found was lower than the number of mixture components that it was trying to find. For these cases, both the number of mixture components the model was looking for as suggested by the initial GMM (Section \ref{sec:n_clus}) and the number of mixture components as found by the MoPPCAs were noted.

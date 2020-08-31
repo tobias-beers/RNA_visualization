@@ -1,0 +1,52 @@
+\chapter{PPCA model defined in Stan}\label{AP:ppca_stan}
+
+This below is an example of a PPCA model defined in Stan. Note that priors have been specified over the parameters $\bm{\mu}$, $\sigma^2$ and $\bm{W}$ (line 32). The distributions of $x$ and $z$ have been specified for the model to infer the log-likelihood by itself (line 39). The user could also have passed the log-likelihood to the model directly instead. The latent distribution is specified to have a covariance matrix $\bm{I}_m$, to make sure that the latent dimensions show little to no correlation.
+
+\vspace{25px}
+
+\begin{lstlisting}[caption={PCPA model defined in Stan}, label={lst:ppca}, language=Stan]
+data{
+    int<lower=0> N;// number  of  data-points
+    int<lower=0> D;// number  of  dimensions  in  observed  data-set
+    int<lower=0> M;// number  of  dimensions  in  latent  data-set
+    vector[D] x[N];// observed data
+}
+
+transformed data{
+    vector[M] mean_z;
+    matrix[M,M] cov_z;
+    
+    for (m in 1:M){
+        mean_z[m] = 0.0;
+        for (n in 1:M){
+            if (m==n){
+                cov_z[m,n]=1.0;
+            } else{
+                cov_z[m,n]=0.0;
+            }
+        }
+    }
+}
+
+parameters{
+    matrix[M,N] z;          // latent data
+    matrix[D,M] W;          // factor loadings
+    real<lower=0> sigma;    // standard  deviations
+    vector[D] mu;           // added means
+}
+
+model{
+    // priors
+    for (d in 1:D){
+        W[d] ~ normal(0.0,sigma);
+        mu[d]~normal(0.0, 5.0) ;
+        }
+    sigma~lognormal(0.0, 1.0) ;
+    
+    // likelihood
+    for (n in 1:N){
+        z[:,n] ~ multi_normal(mean_z, cov_z);
+        x[n] ~ normal(W*col(z,n)+mu, sigma);
+        }    
+}
+\end{lstlisting}

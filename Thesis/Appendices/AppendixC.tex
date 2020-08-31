@@ -1,0 +1,37 @@
+\chapter{Gaussian distribution}
+\section{Converting probability to its log-probability}\label{AP:log_prob}
+\begin{equation}\label{eq:ap_logprob}
+\begin{split}
+    \ln p(\textbf{x}^n_1 | \mu, \sigma^2) &= \prod_{i=1}^{n}{\mathcal{N}(x_i|\mu, \sigma^2)}\\
+    \ln p(\textbf{x}^n_1 | \mu, \sigma^2) &= \ln \prod_{i=1}^{n}\frac{1}{(2 \pi \sigma ^2)^{\frac{1}{2}}} e^{- \frac{1}{2\sigma ^2}(x_i - \mu)^2}\\
+    \ln p(\textbf{x}^n_1 | \mu, \sigma^2) &= \sum_{i=1}^{n} \ln \frac{1}{(2 \pi \sigma ^2)^{\frac{1}{2}}} e^{- \frac{1}{2\sigma ^2}(x_i - \mu)^2}\\
+    \ln p(\textbf{x}^n_1 | \mu, \sigma^2) &= \sum_{i=1}^{n} \ln \frac{1}{(2 \pi \sigma ^2)^{\frac{1}{2}}} + \ln e^{- \frac{1}{2\sigma ^2}(x_i - \mu)^2}\\
+    \ln p(\textbf{x}^n_1 | \mu, \sigma^2) &= \sum_{i=1}^{n} -\frac{1}{2} \ln (2 \pi \sigma ^2) - \frac{1}{2\sigma ^2}(x_i - \mu)^2\\
+    \ln p(\textbf{x}^n_1 | \mu, \sigma^2) &= \sum_{i=1}^{n} -\frac{1}{2} \ln (2 \pi \sigma ^2) - \frac{1}{2\sigma ^2}(x_i - \mu)^2\\
+    \ln p(\textbf{x}^n_1 | \mu, \sigma^2) &= -\frac{n}{2} \ln 2 \pi -\frac{n}{2} \ln \sigma ^2 - \sum_{i=1}^{n} \frac{1}{2\sigma ^2}(x_i - \mu)^2\\
+\end{split}
+\end{equation}
+
+\section{Maximum likelihood for \texorpdfstring{$\mu$}{the mean}}\label{AP:mu_ML}
+\begin{equation}\label{eq:ap_derivative_mu}
+\begin{split}
+    \frac{\partial }{\partial \mu } \big( - \frac{n}{2} \ln{2 \pi} - \frac{n}{2} \ln{\sigma ^2} - \sum_{i=1}^{n} \frac{1}{2\sigma ^2}(x_i - \mu_{ML})^2 \big) &= 0\\
+    \frac{\partial}{\partial \mu} \big( - \sum_{i=1}^{n} \frac{1}{2\sigma ^2}(x_i - \mu_{ML})^2 \big) &= 0\\
+    - \sum_{i=1}^{n} \frac{1}{2\sigma ^2}(-2 x_i + 2 \mu_{ML}) &= 0\\
+    \sum_{i=1}^{n} \frac{2 x_i}{2\sigma ^2} &= \sum_{i=1}^{n} \frac{2 \mu_{ML}}{2\sigma ^2}\\
+    \sum_{i=1}^{n} x_i &= n \mu_{ML}\\
+    \frac{1}{n} \sum_{i=1}^{n} x_i &= \mu_{ML}\\
+\end{split}
+\end{equation}
+
+\section{Maximum likelihood for \texorpdfstring{$\sigma^2$}{the standard deviation}}\label{AP:s2_ML}
+
+\begin{equation}\label{eq:ap_derivative_sigma}
+\begin{split}
+    \frac{\partial }{\partial \sigma^2 } \big( - \frac{n}{2} \ln{2 \pi} - \frac{n}{2} \ln{\sigma^2_{ML}} - \sum_{i=1}^{n} \frac{1}{2\sigma^2_{ML}}(x_i - \mu_{ML})^2 \big) &= 0\\
+    \frac{\partial}{\partial \sigma^2} \big( - \frac{n}{2} \ln{\sigma^2_{ML}}  - \sum_{i=1}^{n} \frac{1}{2\sigma^2_{ML}}(x_i - \mu_{ML})^2 \big) &= 0\\
+    \frac{n}{2\sigma^2_{ML}} - \sum_{i=1}^{n} \frac{1}{2{\sigma^2_{ML}}^2}(x_i - \mu_{ML})^2 &= 0\\
+    n\sigma^2_{ML} - \sum_{i=1}^{n} (x_i - \mu_{ML})^2 &= 0\\
+    \frac{1}{n} \sum_{i=1}^{n} (x_i - \mu_{ML})^2 &= \sigma^2_{ML}\\
+\end{split}
+\end{equation}

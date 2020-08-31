@@ -1,0 +1,124 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage[normalem]{ulem}
+\usepackage{todonotes}
+\usepackage{amssymb}
+% \usepackage[colorlinks]{hyperref}
+\usepackage[symbols,nogroupskip,sort=none]{glossaries-extra}
+\usepackage{makecell}
+% \usepackage{minted}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{wrapfig}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{multirow}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+
+
+
+\title{Hierarchical visualization of single-cell RNA-seq data}
+\author{Tobias Beers}
+\date{November 2019}
+
+
+\begin{document}
+
+\glsaddall
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{1cm}
+            
+        \Huge
+        \textbf{Hierarchical visualization of single-cell RNA-seq data}
+            
+        \vspace{0.5cm}
+        \LARGE
+        % Thesis Subtitle
+            
+        \vspace{1.5cm}
+            
+        \textbf{Tobias Beers}
+            
+        \vfill
+            
+        Submitted in partial fulfillment for the degree of master of science
+            
+        \vspace{0.8cm}
+            
+        % \includegraphics[width=0.4\textwidth]{university}
+            
+        \Large
+        % Department Name\\
+        MSc Computational Science\\
+        Faculty of Science\\
+        University of Amsterdam\\
+        % Country\\
+        31-06-2020\todo{check when done}
+            
+    \end{center}
+\end{titlepage}
+
+% \maketitle
+
+\thispagestyle{plain}
+\begin{center}
+    \Large
+    \textbf{Hierarchical visualization of single-cell RNA-seq data}
+        
+    \vspace{0.4cm}
+    \large
+    % Thesis Subtitle
+        
+    \vspace{0.4cm}
+    \textbf{Tobias Beers}
+       
+    \vspace{0.9cm}
+    \textbf{Abstractabstractabstractabstractab stractabstractabstractabstractabstr actabstra ctabstractabstrac tabstractabs tractabstractab stract abstractabstractabstrac tabstra ctabstractabstrac tabstrac tabstr actabstractabstractabst rac tabstracta bstractabstractabstra ctabstractabstractabstrac tabst ractabs tractabstract abstractabstractabs tractabstractabs tractab stractabstractabs tractabstra ctabstracta bstracta bstractabstra ctabst ractabstractabstrac tabstractabstractab stractabstractabst ractabstractab stractabs tractabstra ctabstractabstracta bstractabstracta bstractabstracta bstracta bstractab stractabs tractabstrac tabtractabstrac tabstractabstra\todo{write better abstract}ctabstra ctabstractabstr actabstractabstra ctabstractabstr actabst ractabstractab stractabstractabsct abstract abstractabs tractabstra ctabstr actabstractabs tractabstract abstractabstract abstractabs tractabstract}
+\end{center}
+
+\newpage
+
+\tableofcontents
+
+% \include{todo}
+\include{Introduction}
+\include{Approach}
+\include{Methods}
+\include{Results}
+\include{Discussion}
+
+\bibliographystyle{ieeetr}
+\bibliography{refs}
+
+\include{Appendices}
+
+\end{document}
