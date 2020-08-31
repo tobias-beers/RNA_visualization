@@ -24,7 +24,7 @@ Other Notebooks were used to generate results:
 - Hierarchical_model_Splatter.ipynb: Evaluating the HmPPCAs model on the Splatter data-sets
 - NUTS_VB_comparison.ipynb: A comparison o NUTS and ADVI
 
-Data-sets used in these notebooks may be found in './pickled_data'
+Data-sets used in these notebooks may be found in './pickled_data' and '../DataSets/'
 
 ### Others
 
