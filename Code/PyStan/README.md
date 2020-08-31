@@ -1,6 +1,6 @@
 # Models in PyStan
 
-This directory includes several models specified in PyStan. The PyStan code is given in './StanModels'. These models were compile and saved in pickled format, the can be found in this form in './pickled_models'.
+This directory includes several models specified in PyStan. The PyStan code is given in './StanModels'. These models were compile and saved in pickled format, the can be found in this form in './pickled_models'. Figures that were generated using these notebooks can be found in './figs'.
 The iPython notebooks demonstrate the usage and performance of these models.
 
 

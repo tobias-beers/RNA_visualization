@@ -22,6 +22,7 @@ sns.set()
 
 
 def loadStan(file, recompile=False, automatic_pickle = True, parallel=False):
+    # Either loads pickled Stan model or compiles and saves new model from code
     print('Loading model ', file)
     if parallel:
         file_p = file+'_p'
@@ -67,6 +68,7 @@ def loadStan(file, recompile=False, automatic_pickle = True, parallel=False):
     return model
 
 def GAP(points, k_max=2, nref=10):
+    # Computes GAP score for number of clusters determination
     gap = []
     kmeans_list = []
     n,dims = np.shape(points)
@@ -89,6 +91,7 @@ def GAP(points, k_max=2, nref=10):
     return list(range(1,k_max+1))[np.argmax(gap)], kmeans_list[np.argmax(gap)], gap
 
 def est_k(points,k_min = 1, k_max = 2, refs = 3, retry=2, method='bic', verbose = False, weights=None, clustering='gmm'):
+    # Wrapper for numer of clusters determination methods
     
     quit = False
     clus = []
@@ -179,7 +182,7 @@ def est_k(points,k_min = 1, k_max = 2, refs = 3, retry=2, method='bic', verbose 
         return 1
     
 def kmeans_AIC(points, labels, K, verbose = False):
-#     warnings.filterwarnings('error')
+#     Computes AIC
     if verbose:
         print('Evaluating %i clusters'%K)
     N,D = np.shape(points)
@@ -209,6 +212,7 @@ def kmeans_AIC(points, labels, K, verbose = False):
     return aic, bic
 
 def get_parameters(points, labels):
+    # Recomputes several statistics in a higher dimensional space given the clustering of data-points
     N, D = np.shape(points)
     K = set(labels)
     model_data = {}
@@ -226,10 +230,11 @@ def get_parameters(points, labels):
     return model_data
 
 def logres_scores(points, labels, weights, K=5):
-    
+    # Get the K-fold cross-validated logistic regression score
     N,D = np.shape(points)
     folded_index = np.zeros(N)
     
+    # Create random folds
     w_sort = np.argsort(-weights)
     
     for i in range(N):
@@ -268,6 +273,7 @@ def logres_scores(points, labels, weights, K=5):
     return preds_final, w_acc, w_ari
     
 class hierarchical_model:
+    # HmPPCAs model
     
     def __init__(self):
         
@@ -279,6 +285,7 @@ class hierarchical_model:
         self.knots_found = []
     
     def fit(self,x, M=2, max_depth=5, k_max =3, plotting=True, min_clus_size=10, vis_threshold=0.05, its=300, samplingmethod='VB', n_try=3, n_cluster='latent', plot_kmeans=True, init_cluster='gmm', savefigs=False):
+        # Fit to data
         
         if k_max <3:
             print("It is suggested to give 'k_max' a value of at least 3.")
@@ -882,11 +889,12 @@ class hierarchical_model:
         return
     
     def ari_per_level(self, ind):
+        # Get ARI for each level
         lvls = len(self.cats_per_lvl)
         return [adjusted_rand_score(self.cats_per_lvl[lvl], ind) for lvl in range(lvls)]
     
     def visual_score(self, ind, plot_hmppca = True, plot_hmppca_logres = False, plot_real = True, plot_logreg = True, vis_threshold=0.1, labelnames=[], savefigs=False, plotlegend= False):
-        
+        # Plot result and give logistic regression scores
         acc_scores =[]
         
         if len(labelnames)==0:
@@ -1009,7 +1017,7 @@ class hierarchical_model:
 
             
 def weighted_Accuracy(true, weights):
-    
+    # Compute weighted accuracy
     total = 0
     correct = 0
     for i in range(len(true)):
