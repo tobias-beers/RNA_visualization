@@ -29,6 +29,6 @@ Data-sets used in these notebooks may be found in './pickled_data' and '../DataS
 
 ### Others
 
-- Samplers.ipynb shows how MC smapling, HMC and NUTS work.
+- Samplers.ipynb shows how MC sampling, HMC and NUTS work.
 - utils.py contains some functions and the complete HmPPCAs model used in some of the notebooks.
 
