@@ -22,8 +22,8 @@ Other Notebooks were used to generate results:
 - Hierarchical_model_Darmanis.ipynb: Evaluating the HmPPCAs model on the Darmanis Data-set
 - Hierarchical_Model_nestorowa.ipynb: Evaluating the HmPPCAs model on the Nestorowa data-set
 - Hierarchical_model_Splatter.ipynb: Evaluating the HmPPCAs model on the Splatter data-sets
-- NUTS_VB_comparison.ipynb: A comparison o NUTS and ADVI
-
+- NUTS_VB_comparison.ipynb: A comparison of NUTS and ADVI
+- UMAP.ipynb: A comparison of t-SNE and UMAP, also some comparisons with Stan
 Data-sets used in these notebooks may be found in './pickled_data' and '../DataSets/'
 
 ### Others
